@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Process Triage - Start</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
+        h1 { text-align: center; }
+        .option { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+        .option:hover { background: #f9f9f9; }
+        .submit { text-align: center; margin-top: 2rem; }
+        button { padding: 0.5rem 1rem; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    {% if user_name and user_email %}
+        <div style="text-align:right; font-size:0.9rem;">
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
+            <a href="/dashboard">Dashboard</a> |
+            <a href="/reset-password">Reset password</a> |
+            <a href="/logout">Logout</a>
+        </div>
+    {% endif %}
+    <h1>Start a New Triage</h1>
+    <form method="get" action="/enter">
+        <div class="option">
+            <input type="radio" id="quick" name="path" value="quick" required>
+            <label for="quick"><strong>Quick Look</strong> – answer just a few questions for a fast recommendation.</label>
+        </div>
+        <div class="option">
+            <input type="radio" id="deep" name="path" value="deep" required>
+            <label for="deep"><strong>Deep Evaluation</strong> – go step-by-step through the full wizard.</label>
+        </div>
+        <div class="submit">
+            <button type="submit">Next</button>
+        </div>
+    </form>
+</body>
+</html>

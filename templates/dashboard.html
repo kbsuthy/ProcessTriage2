@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; line-height: 1.5; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+        th { background: #f0f0f0; }
+        .header { text-align:right; font-size:0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if user_name and user_email %}
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; |
+            <a href="/logout">Logout</a>
+        {% endif %}
+    </div>
+    <h1>Your Submissions</h1>
+    {% if records %}
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Process</th><th>Purpose</th><th>Path</th><th>Score</th><th>Recommendation</th><th>Action</th><th>Edit</th></tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                    <tr>
+                        <td>{{ r.created }}</td>
+                        <td>{{ r.name }}</td>
+                        <td>{{ r.purpose if r.purpose else '' }}</td>
+                        <td>{{ r.path }}</td>
+                        <td>{{ r.score.score if r.score else '' }}%</td>
+                        <td>{{ r.score.recommendation if r.score else '' }}</td>
+                        <td><a href="{{ url_for('view_record', rec_id=r.id) }}">View</a></td>
+                        <td><a href="{{ url_for('view_record', rec_id=r.id) }}/edit">Edit</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No submissions yet. <a href="/">Start a new triage</a>.</p>
+    {% endif %}</body>
+</html>

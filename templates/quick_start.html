@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quick Look – Start</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
+        label { display: block; margin-top: 1rem; }
+        input[type="text"], select { width: 100%; padding: 0.5rem; }
+        .error { color: red; margin-top: 1rem; }
+        .submit { text-align: center; margin-top: 2rem; }
+        button { padding: 0.5rem 1rem; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    {% if user_name and user_email %}
+        <div style="text-align:right; font-size:0.9rem;">
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; <a href="/reset-password">(reset pw)</a> <a href="/logout">(logout)</a>
+        </div>
+    {% endif %}
+    <h1>Quick Look</h1>
+    <p>To start, give the process a name, type and a short statement of purpose.</p>
+    {% if is_guest %}
+        <div style="border:1px solid #f0ad4e;background:#fff8e6;padding:0.5rem;border-radius:4px;margin-bottom:1rem;">
+            <strong>Guest session:</strong> this evaluation will not be saved or exported.
+        </div>
+    {% endif %}
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+        <label for="process_name">Process name <span style="color: red">*</span></label>
+        <input type="text" id="process_name" name="process_name" value="{{ name or '' }}" required>
+
+        <label for="process_type">Process type <span style="color: red">*</span></label>
+        <select id="process_type" name="process_type" required>
+            <option value="" disabled {{ 'selected' if not selected_type else '' }}>-- choose --</option>
+            {% for key, tpl in templates.items() %}
+                <option value="{{ key }}" {% if selected_type==key %}selected{% endif %}>{{ tpl.label }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="purpose">Brief description of purpose <span style="color: red">*</span></label>
+        <input type="text" id="purpose" name="purpose" value="{{ purpose or '' }}" required>
+
+        <div class="submit">
+            <button type="submit">Continue &rarr;</button>
+        </div>
+    </form>
+</body>
+</html>

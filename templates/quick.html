@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quick Look</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
+        label { display: block; margin-top: 1rem; }
+        input[type="text"], textarea { width: 100%; padding: 0.5rem; }
+        .error { color: red; margin-top: 1rem; }
+        .submit { text-align: center; margin-top: 2rem; }
+        button { padding: 0.5rem 1rem; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    {% if user_name and user_email %}
+        <div style="text-align:right; font-size:0.9rem;">
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; <a href="/reset-password">(reset pw)</a> <a href="/logout">(logout)</a>
+        </div>
+    {% endif %}
+    {% if is_guest %}
+        <div style="border:1px solid #f0ad4e;background:#fff8e6;padding:0.6rem;border-radius:4px;margin-bottom:1rem;">
+            <strong>Guest session:</strong> results will not be saved or exported.
+        </div>
+    {% endif %}
+    <h1>Quick Look</h1>
+    <p><a href="{{ url_for('quick_start') }}">← Back</a></p>
+    {% if user_name and user_email %}
+        <p>Pick a process name, select a type, and answer a few short questions.</p>
+    {% else %}
+        <p>Enter your name/email, a process name, pick a type, and answer a few short questions.</p>
+    {% endif %}
+    {% if error %}
+        <div class="error">{{ error }}</div>
+        {% if debug %}
+            <div class="debug">
+                <strong>Debug values received:</strong>
+                <ul>
+                    <li>your name: "{{ debug.user_name }}"</li>
+                    <li>your email: "{{ debug.user_email }}"</li>
+                    <li>process name: "{{ debug.name }}"</li>
+                    <li>step: "{{ debug.step }}"</li>
+                    <li>type: "{{ debug.type }}"</li>
+                </ul>
+            </div>
+        {% endif %}
+    {% endif %}
+    <form method="post">
+        {% if user_name and user_email %}
+            <input type="hidden" name="user_name" value="{{ user_name }}">
+            <input type="hidden" name="user_email" value="{{ user_email }}">
+        {% elif not is_guest %}
+            <label for="user_name">Your name <span style="color: red">*</span></label>
+            <input type="text" id="user_name" name="user_name" value="" required>
+
+            <label for="user_email">Your email <span style="color: red">*</span></label>
+            <input type="text" id="user_email" name="user_email" value="" required>
+        {% else %}
+            <!-- guest: keep hidden fields so server receives form keys but no required inputs -->
+            <input type="hidden" name="user_name" value="">
+            <input type="hidden" name="user_email" value="">
+        {% endif %}
+
+        {# show summary of the basic info and keep them hidden #}
+        <p><strong>Process:</strong> {{ name }}</p>
+        <p><strong>Purpose:</strong> {{ purpose }}</p>
+        <p><strong>Type:</strong> {{ templates[selected_type].label if selected_type else '' }}</p>
+        <input type="hidden" name="process_name" value="{{ name }}">
+        <input type="hidden" name="purpose" value="{{ purpose }}">
+        <input type="hidden" id="process_type" name="process_type" value="{{ selected_type }}">
+
+        {% if selected_type != 'R' %}
+        <label for="step1">First step description <span style="color: red">*</span></label>
+        <textarea id="step1" name="step1" rows="3" {% if selected_type != 'R' %}required{% endif %}>{{ step or '' }}</textarea>
+        {% endif %}
+
+        {% for key, tpl in templates.items() %}
+            <div class="question-block" id="block_{{ key }}" style="display: none;">
+                <h3>{{ tpl.label }} questions</h3>
+                {% for q in tpl.questions %}
+                    <label for="answer_{{ q.key }}">{{ q.prompt }} (1–5)</label>
+                    <input type="number" id="answer_{{ q.key }}" name="answer_{{ q.key }}" min="1" max="5"
+                           value="{% if values and ('answer_' + q.key) in values %}{{ values['answer_' + q.key] }}{% else %}{{ request.form.get('answer_' + q.key, '') }}{% endif %}"
+                           required>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="submit">
+            <button type="submit">Save &amp; Continue</button>
+        </div>
+    </form>
+
+    <script>
+        function showQuestions() {
+            const sel = document.getElementById('process_type').value;
+            document.querySelectorAll('.question-block').forEach(block => {
+                const show = (block.id === 'block_' + sel);
+                block.style.display = show ? 'block' : 'none';
+                // disable inputs in hidden blocks so browser doesn't validate them
+                block.querySelectorAll('input').forEach(inp => inp.disabled = !show);
+            });
+        }
+        // on page load show previously selected block if any
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.question-block input').forEach(inp => inp.disabled = true);
+            if (document.getElementById('process_type').value) showQuestions();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Information</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; }
+        label { display: block; margin-top: 1rem; }
+        input[type="text"] { width: 100%; padding: 0.5rem; }
+        .error { color: red; margin-top: 1rem; }
+        .submit { text-align: center; margin-top: 2rem; }
+        button { padding: 0.5rem 1rem; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <h1>Welcome</h1>
+    <p>Before we start, please tell us who you are.</p>
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post">
+        <label for="user_name">Your name <span style="color: red">*</span></label>
+        <input type="text" id="user_name" name="user_name" value="{{ name or '' }}" required>
+
+        <label for="user_email">Your email <span style="color: red">*</span></label>
+        <input type="text" id="user_email" name="user_email" value="{{ email or '' }}" required>
+
+        <label for="user_password">Password <span style="color: red">*</span></label>
+        <input type="password" id="user_password" name="user_password" value="" required>
+
+        <label for="user_password_confirm">Confirm password <span style="color: red">*</span></label>
+        <input type="password" id="user_password_confirm" name="user_password_confirm" value="" required>
+
+        <div class="submit">
+            <button type="submit">Continue</button>
+        </div>
+    </form>
+</body>
+</html>

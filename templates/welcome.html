@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome — Process Triage</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Arial, sans-serif; padding: 2rem; }
+      .card { max-width: 640px; margin: 2rem auto; border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; }
+      .actions { margin-top: 1rem; }
+      a.button { display: inline-block; margin-right: .5rem; padding: .5rem 1rem; background:#007bff; color:#fff; border-radius:4px; text-decoration:none }
+      a.secondary { background:#6c757d }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Welcome to Process Triage</h1>
+      <p>This tool helps you quickly evaluate and track processes. To get started please sign in or create a profile.</p>
+      <div class="actions">
+        <a class="button" href="/user">Sign in / Create Profile</a>
+        <a class="button secondary" href="/enter?path=quick&guest=1">Try Quick Look (guest)</a>
+        <a class="button secondary" href="/user" title="Sign in required">Try Deep Evaluation (sign in required)</a>
+      </div>
+      <p style="margin-top:1rem;color:#666">Returning users: sign in to see your dashboard and edit saved records.</p>
+    </div>
+  </body>
+</html>
