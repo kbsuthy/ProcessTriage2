@@ -8,6 +8,11 @@ A Flask web application for scoring and capturing process assessments. Users can
 - **Access Control**: Registration and login required for assessment flows
 - **Quick Look**: Two-page questionnaire for rapid process assessment
 - **Deep Evaluation**: More comprehensive assessment requiring login
+- **Live Discussion Mode**: Chat-based deep dive with an AI assistant powered by Mistral LLM
+- **Process Map Visualization**: Mermaid flowcharts showing process steps, microsteps, and improvement suggestions
+- **Live Map Building**: Process map updates in real-time during discussion as the assistant learns more
+- **Structured Recommendations**: AI-generated improvement suggestions with step-level traceability (e.g., `[R1 -> S2]`)
+- **Markdown Chat Rendering**: Chat messages preserve formatting—bullets, headings, and numbered lists display cleanly
 - **Dashboard**: View and edit saved assessments
 - **Scoring System**: 8 weighted questions that generate a priority recommendation (High/Medium/Low priority)
 - **SQL Persistence**: Users and assessments stored in SQL (SQLite locally, PostgreSQL on Heroku)
@@ -41,6 +46,55 @@ curl -b cookies.txt http://localhost:5000/api/v1/assessments/S001
 
 All endpoints require authentication and return JSON. For complete API documentation, see [API_DOCUMENTATION.md](API_DOCUMENTATION.md).
 
+## AI-Powered Deep Discussion & Process Maps
+
+### Live Discussion Mode
+
+After completing a deep evaluation questionnaire, users can engage in a guided discussion with an AI assistant (powered by Mistral LLM). The assistant:
+
+- Asks clarifying questions to understand the process better
+- Builds a visual process map in real-time as the discussion progresses
+- Stops asking questions when you request recommendations or indicate you've provided all available details
+- Formats responses with proper markdown (bullets, headings, numbered lists)
+
+**Key behaviors:**
+- The map acts as the "review" — the assistant respects the process map as the source of truth
+- When recommendations are requested, the assistant provides structured improvement suggestions instead of continuing to probe
+- All chat messages support markdown formatting for readability
+
+### Process Map Visualization
+
+Each discussion generates a **live Mermaid flowchart** showing:
+
+- **Main steps**: Core process flow
+- **Microsteps**: Detailed sub-tasks grouped under each main step
+- **Improvement lane**: AI-suggested improvements at the bottom with step-level traceability (e.g., `[R1 -> S2]` means recommendation 1 applies to step S2)
+- **Scrollable viewport**: Both horizontal and vertical scrollbars allow panning a large diagram without expanding the page layout
+- **Large, readable text**: Node labels are sized for easy reading in the scrollable window
+- **Live updates**: Map re-renders automatically as the discussion evolves
+
+### Structured Recommendations
+
+When you ask for recommendations, the assistant returns:
+
+1. **Numbered main steps** with microstep bullets below each
+2. **Step-level traceability tags** like `[R# -> S#]` linking each recommendation to a process step
+3. **Expected benefits** for each recommendation
+4. **Priority-based ordering** for quick decision-making
+
+Example output:
+```
+Structured Process Review
+1) Intake request
+   - Validate required fields
+2) Manager approval
+   - Escalate exceptions
+
+Recommended Improvements (Prioritized)
+1) [R1 -> S1] For 'Intake request', convert the repeated micro-steps into a short checklist...
+2) [R2 -> S2] For 'Manager approval', define required input fields...
+```
+
 ## Quick Start
 
 1. Create and activate a virtual environment (macOS/Linux):
@@ -64,6 +118,15 @@ cp .env.example .env
 
 Edit `.env` with your values (especially `FLASK_SECRET_KEY`, admin settings, and any SMTP/AI keys).
 
+**LLM/AI Configuration (optional):**
+To enable live discussion with AI-powered process mapping, set:
+```bash
+MISTRAL_API_KEY=your_mistral_api_key_here
+```
+
+If `MISTRAL_API_KEY` is not set, the app will use a fallback rule-based discussion system (discussions will still work, but without live LLM responses).
+
+**Security in Production:**
 When `APP_ENV=production`, startup includes strict security validation. The app will fail fast if critical settings are unsafe or missing (for example, missing/weak `FLASK_SECRET_KEY`, `SESSION_COOKIE_SECURE!=1`, or incomplete admin bootstrap credentials).
 
 4. Run the Flask app:
@@ -111,6 +174,7 @@ The `wsgi.py` module exposes `app` for Gunicorn.
   - `quick_result.html` — Quick look results summary
   - `deep.html` — Deep evaluation questionnaire
   - `deep_result.html` — Deep evaluation results summary
+  - `discussion.html` — Live discussion mode with AI chat and real-time process map
   - `dashboard.html` — User's assessment history
   - `record/<id>` — View specific assessment
 
@@ -211,6 +275,7 @@ The admin view shows:
 - `/dashboard` — User's assessment history
 - `/admin/db` — Admin database inspection page (requires admin email)
 - `/record/<id>` — View/edit specific assessment
+- `/record/<id>/discussion` — Live discussion mode for deep evaluation with AI and process map
 - `/quick_start` — Quick look page 1 (process details)
 - `/quick` — Quick look page 2 (questions)
 - `/deep` — Deep evaluation questionnaire

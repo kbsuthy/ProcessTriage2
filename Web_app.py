@@ -3322,8 +3322,6 @@ def deep_evaluation():
                 return redirect(url_for('dashboard'))
             return redirect(url_for('home'))
 
-        # debug print
-        app.logger.debug(f"Received deep POST: user_name={user_name!r}, user_email={user_email!r}, name={name!r}, purpose={purpose!r}, type={proc_type!r}")
         missing = []
         if not is_guest and not user_name:
             missing.append('your name')

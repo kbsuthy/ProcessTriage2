@@ -1,6 +1,82 @@
-.venv/
+# Python
 __pycache__/
-*.pyc
-data_store.json
-.DS_Store
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
 .env
+.env.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+~$*
+
+# Application-specific
+data_store.json
+users_store.json
+cookies.txt
+*.db
+*.sqlite
+*.sqlite3
+project.db.backup*
+
+# Flask
+instance/
+.webassets-cache
+
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# OS
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+*.swp
+
+# Legacy/Backup files
+*copy.py
+app\ copy.py
+Process\ Triage\ Planning\ Document.docx
