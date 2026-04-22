@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1080px; margin: 2rem auto; line-height: 1.5; padding: 0 1rem; }
+        .header { text-align: right; font-size: 0.9rem; margin-bottom: 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 8px; background: #fff; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+        .stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.8rem; }
+        .stat { padding: 0.65rem 0.85rem; border: 1px solid #ddd; border-radius: 6px; min-width: 180px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.92rem; }
+        th, td { border: 1px solid #ddd; text-align: left; padding: 0.45rem 0.55rem; vertical-align: top; }
+        th { background: #f5f5f5; }
+        .actions { margin-top: 1rem; }
+        .actions a { display: inline-block; text-decoration: none; padding: 0.45rem 0.7rem; border-radius: 4px; color: #fff; background: #4b7470; }
+        .note { font-size: 0.9rem; color: #555; }
+        code { word-break: break-all; }
+        .inline-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .inline-actions a,
+        .inline-actions button {
+            display: inline-block;
+            text-decoration: none;
+            border: none;
+            padding: 0.35rem 0.55rem;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .inline-actions a.edit { background: #0b5ed7; }
+        .inline-actions button.delete { background: #bb2d3b; }
+        .flash {
+            margin: 0 0 1rem 0;
+            padding: 0.7rem 0.85rem;
+            border: 1px solid #badbcc;
+            background: #d1e7dd;
+            border-radius: 6px;
+            color: #0f5132;
+        }
+        .merge-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.6rem;
+            align-items: end;
+            margin-top: 0.75rem;
+        }
+        .merge-form label { display: block; font-size: 0.85rem; margin-bottom: 0.2rem; }
+        .merge-form input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 0.45rem 0.55rem;
+            box-sizing: border-box;
+        }
+        .merge-form button {
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            background: #4b7470;
+            padding: 0.5rem 0.8rem;
+            cursor: pointer;
+        }
+        .merge-preview {
+            margin-top: 0.9rem;
+            padding: 0.8rem 0.9rem;
+            border: 1px solid #ffe08a;
+            border-radius: 6px;
+            background: #fff8e1;
+            color: #5f4400;
+        }
+        .merge-preview .preview-actions {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+        }
+        .merge-preview .preview-actions button,
+        .merge-preview .preview-actions a {
+            display: inline-block;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #fff;
+            background: #4b7470;
+            padding: 0.45rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .merge-preview .preview-actions a {
+            background: #6c757d;
+        }
+        .retention-legend {
+            margin-top: 0.7rem;
+            font-size: 0.88rem;
+            color: #5a5a5a;
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+        }
+        .retention-chip {
+            border-radius: 999px;
+            padding: 0.12rem 0.5rem;
+            border: 1px solid #ddd;
+            background: #f6f6f6;
+        }
+        .retention-chip.warn {
+            background: #fff4d6;
+            border-color: #e7c768;
+        }
+        .retention-chip.urgent {
+            background: #fde1e3;
+            border-color: #e4979e;
+        }
+        .retention-row.warn td {
+            background: #fff9ea;
+        }
+        .retention-row.urgent td {
+            background: #fff1f2;
+        }
+        .user-search-match td {
+            background: #eaf8ff;
+        }
+        .user-search-focus td {
+            box-shadow: inset 0 0 0 2px #2f80ed;
+        }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+    <div class="header">
+        Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash">
+                {% for message in messages %}
+                    <div>{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <h1>Database Admin View</h1>
+        <p class="note">This view is intended for quick administrator access and inspection.</p>
+        <div class="stats">
+            <div class="stat"><strong>Backend</strong><br>{{ snapshot.backend }}</div>
+            <div class="stat"><strong>Total Users</strong><br>{{ snapshot.users_count }}</div>
+            <div class="stat"><strong>Total Assessments</strong><br>{{ snapshot.assessments_count }}</div>
+            <div class="stat"><strong>Total Feedback</strong><br>{{ snapshot.feedback_count }}</div>
+            <div class="stat"><strong>Rows Shown</strong><br>{{ limit }}</div>
+        </div>
+        <p class="note">Database URL (sanity check): <code>{{ snapshot.database_url }}</code></p>
+        <h3>Merge Accounts</h3>
+        <p class="note">Use this to merge two different account emails into one account.</p>
+        <p class="note">Emails are unique in this system, so same-email duplicate accounts are not supported.</p>
+        <p class="note">Step 1: preview the merge. Step 2: confirm to apply changes.</p>
+        <form class="merge-form" method="post" action="{{ url_for('admin_merge_users') }}">
+            <input type="hidden" name="merge_action" value="preview">
+            <div>
+                <label for="source_email">Source Email (account to remove)</label>
+                <input id="source_email" name="source_email" type="email" required value="{{ merge_source_email if merge_source_email else '' }}">
+            </div>
+            <div>
+                <label for="target_email">Target Email (account to keep)</label>
+                <input id="target_email" name="target_email" type="email" required value="{{ merge_target_email if merge_target_email else '' }}">
+            </div>
+            <div>
+                <button type="submit">Preview Merge</button>
+            </div>
+        </form>
+
+        {% if merge_preview %}
+            <div class="merge-preview">
+                <strong>Preview ready:</strong>
+                Move <strong>{{ merge_preview.records_to_move }}</strong> submissions
+                from <strong>{{ merge_preview.source_name if merge_preview.source_name else merge_preview.source_email }}</strong>
+                to <strong>{{ merge_preview.target_name if merge_preview.target_name else merge_preview.target_email }}</strong>,
+                then remove <strong>{{ merge_preview.source_email }}</strong>.
+
+                <div class="preview-actions">
+                    <form method="post" action="{{ url_for('admin_merge_users') }}" onsubmit="return confirm('Confirm this merge? The source account will be removed.');">
+                        <input type="hidden" name="merge_action" value="confirm">
+                        <input type="hidden" name="source_email" value="{{ merge_preview.source_email }}">
+                        <input type="hidden" name="target_email" value="{{ merge_preview.target_email }}">
+                        <button type="submit">Confirm Merge</button>
+                    </form>
+                    <a href="{{ url_for('admin_db_view') }}">Cancel</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Soft-Deleted Retention Queue</h2>
+        <p class="note">Records deleted by users are retained for 2 years and then permanently deleted. Use this queue to audit upcoming permanent deletions.</p>
+        <div class="stats">
+            <div class="stat"><strong>Total Soft-Deleted</strong><br>{{ deleted_queue_stats.total }}</div>
+            <div class="stat"><strong>Due In 30 Days</strong><br>{{ deleted_queue_stats.due_30 }}</div>
+            <div class="stat"><strong>Due In 7 Days</strong><br>{{ deleted_queue_stats.due_7 }}</div>
+        </div>
+        <div class="retention-legend">
+            <span class="retention-chip">Normal</span>
+            <span class="retention-chip warn">Due in 30 days or less</span>
+            <span class="retention-chip urgent">Due in 7 days or less</span>
+        </div>
+
+        <form method="get" style="margin-top: 0.8rem; display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end;">
+            <input type="hidden" name="limit" value="{{ limit }}">
+            <input type="hidden" name="user_search" value="{{ user_search }}">
+            <div>
+                <label for="deleted_filter" style="display:block; font-size:0.85rem; margin-bottom:0.2rem;">Filter Queue</label>
+                <select id="deleted_filter" name="deleted_filter" style="padding: 0.42rem 0.55rem; border:1px solid #ccc; border-radius:4px;">
+                    <option value="all" {% if deleted_filter == 'all' %}selected{% endif %}>All soft-deleted records</option>
+                    <option value="due_30" {% if deleted_filter == 'due_30' %}selected{% endif %}>Due in 30 days or less</option>
+                    <option value="due_7" {% if deleted_filter == 'due_7' %}selected{% endif %}>Due in 7 days or less</option>
+                </select>
+            </div>
+            <div>
+                <label for="deleted_sort" style="display:block; font-size:0.85rem; margin-bottom:0.2rem;">Sort</label>
+                <select id="deleted_sort" name="deleted_sort" style="padding: 0.42rem 0.55rem; border:1px solid #ccc; border-radius:4px;">
+                    <option value="days_asc" {% if deleted_sort == 'days_asc' %}selected{% endif %}>Days remaining (soonest first)</option>
+                    <option value="days_desc" {% if deleted_sort == 'days_desc' %}selected{% endif %}>Days remaining (latest first)</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit">Apply Filter</button>
+            </div>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Submission ID</th>
+                    <th>Process</th>
+                    <th>User</th>
+                    <th>Deleted On</th>
+                    <th>Purge Date</th>
+                    <th>Days Remaining</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in deleted_queue %}
+                    <tr class="retention-row {% if row.days_remaining <= 7 %}urgent{% elif row.days_remaining <= 30 %}warn{% endif %}">
+                        <td>{{ row.id }}</td>
+                        <td>{{ row.name if row.name else '(Unnamed)' }}</td>
+                        <td>{{ row.user_email }}</td>
+                        <td>{{ row.deleted_at }}</td>
+                        <td>{{ row.hard_delete_after }}</td>
+                        <td>{{ row.days_remaining }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No soft-deleted records match this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" id="recent-users">
+        <h2>Recent Users</h2>
+        <form method="get" action="{{ url_for('admin_db_view') }}#recent-users" style="margin-top: 0.4rem; display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: end;">
+            <input type="hidden" name="limit" value="{{ limit }}">
+            <input type="hidden" name="deleted_filter" value="{{ deleted_filter }}">
+            <input type="hidden" name="deleted_sort" value="{{ deleted_sort }}">
+            <div>
+                <label for="user_search" style="display:block; font-size:0.85rem; margin-bottom:0.2rem;">Search users (name or email)</label>
+                <input id="user_search" name="user_search" type="text" value="{{ user_search }}" placeholder="e.g. alex or alex@example.com" style="padding: 0.42rem 0.55rem; border:1px solid #ccc; border-radius:4px; min-width: 260px;">
+            </div>
+            <div>
+                <button type="submit">Search</button>
+            </div>
+            {% if user_search %}
+                <div>
+                    <a href="{{ url_for('admin_db_view', limit=limit, deleted_filter=deleted_filter, deleted_sort=deleted_sort) }}#recent-users">Clear</a>
+                </div>
+            {% endif %}
+        </form>
+        <p class="note">
+            {% if user_search %}
+                Showing {{ snapshot.users|length }} of {{ snapshot.matched_users_count }} matching users ({{ snapshot.users_count }} total).
+            {% else %}
+                Showing up to {{ limit }} users ({{ snapshot.users_count }} total).
+            {% endif %}
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in snapshot.users %}
+                    <tr
+                        {% if user_search and loop.first %}id="first-user-search-match"{% endif %}
+                        class="{% if user_search %}user-search-match{% endif %}"
+                    >
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.name }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.created }}</td>
+                        <td>
+                            <div class="inline-actions">
+                                <a class="edit" href="{{ url_for('admin_edit_user', user_email=u.email) }}">Edit</a>
+                                <form method="post" action="{{ url_for('admin_delete_user', user_email=u.email) }}" onsubmit="return confirm('Permanently delete this user and all associated submissions? This cannot be undone.');">
+                                    <button class="delete" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">No users found{% if user_search %} for "{{ user_search }}"{% endif %}.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>User Feedback (Admin Only)</h2>
+        <p class="note">Messages submitted by users through the feedback form. This section is visible only on the admin page.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Submitted</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in snapshot.feedback %}
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.feedback_type|title }}</td>
+                        <td>{{ item.user_name if item.user_name else '(Unknown)' }}</td>
+                        <td>{{ item.user_email }}</td>
+                        <td>{{ item.created_at|pretty_date }}</td>
+                        <td>{{ item.message }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6">No feedback submissions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Recent Assessments</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>User</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in snapshot.assessments %}
+                    <tr>
+                        <td>{{ a.id }}</td>
+                        <td>{{ a.name }}</td>
+                        <td>{{ a.user_email }}</td>
+                        <td>{{ a.path }}</td>
+                        <td>{{ a.status }}</td>
+                        <td>{{ a.updated }}</td>
+                        <td>
+                            <div class="inline-actions">
+                                <a class="edit" href="{{ url_for('admin_edit_assessment', rec_id=a.id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('admin_delete_assessment', rec_id=a.id) }}" onsubmit="return confirm('Permanently delete this submission? This cannot be undone.');">
+                                    <button class="delete" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">No assessments found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="actions">
+            <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+        </div>
+    </div>
+    {% if user_search %}
+        <script>
+            (function () {
+                var usersSection = document.getElementById('recent-users');
+                if (usersSection) {
+                    usersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                var target = document.getElementById('first-user-search-match');
+                if (!target) return;
+                target.classList.add('user-search-focus');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            })();
+        </script>
+    {% endif %}
+</body>
+</html>

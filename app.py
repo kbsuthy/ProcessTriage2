@@ -1,77 +1,145 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import uuid
-import json
-import os
+
+from db import init_database, load_assessments, save_assessments
 
 # -----------------------------
 # Persistence utilities
 # -----------------------------
 
-# File to store assessments as a list of dicts
-DATA_FILE = os.path.join(os.path.dirname(__file__), "data_store.json")
+init_database()
 
 def load_data() -> List[Dict[str, Any]]:
-    if not os.path.exists(DATA_FILE):
-        return []
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return load_assessments()
     except Exception:
         return []
 
 def save_data(assessments: List[Dict[str, Any]]) -> None:
     try:
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(assessments, f, ensure_ascii=False, indent=2)
+        save_assessments(assessments)
     except Exception:
         pass
 
 
 # -----------------------------
-# Dynamic question templates (your top 3)
+# Universal question template for all processes
 # -----------------------------
-# Keys:
-#   C = Coordinating People / Requests Bouncing Around (verbal + mixed intake)
-#   R = Reporting / Analytics Pulls
-#   D = Data Entry / Copying Between Systems
 
+# Common questions for quick look (applies to all process types)
+QUICK_LOOK_QUESTIONS = [
+    {
+        "key": "frequency",
+        "text": "How frequently does this process happen?",
+        "options": [
+            ("rarely", "Rarely (a few times a year or less)"),
+            ("occasionally", "Occasionally (monthly or quarterly)"),
+            ("frequently", "Frequently (weekly)"),
+            ("very_frequently", "Very frequently (daily or near-daily)")
+        ],
+        "explanation": "Frequency helps us understand how quickly small issues add up. Higher-frequency processes are usually stronger candidates for improvement because changes here can have a bigger cumulative impact."
+    },
+    {
+        "key": "involvement",
+        "text": "Who typically participates in this process?",
+        "options": [
+            ("one_person", "One person"),
+            ("small_group", "A small group or team"),
+            ("multiple_teams", "Multiple teams or departments"),
+            ("external", "External partners or vendors")
+        ],
+        "multiple": True,
+        "explanation": "The more people involved, the more opportunities there are for delays, miscommunication, or handoff issues. Processes involving multiple people or teams may benefit from clarification, standardization, or better tooling."
+    },
+    {
+        "key": "frustration",
+        "text": "Does this process involve frustration, delays, or workarounds?",
+        "options": [
+            ("no_issues", "No major issues"),
+            ("minor", "Minor frustrations"),
+            ("frequent", "Frequent frustration or delays"),
+            ("painful", "Consistently painful or confusing")
+        ],
+        "explanation": "People usually feel process problems before they can describe them. Processes with higher frustration are often good candidates for closer review—even if they \"technically work.\""
+    },
+    {
+        "key": "impact",
+        "text": "If this process fails or is done incorrectly, what's the impact?",
+        "options": [
+            ("minor", "Minor inconvenience"),
+            ("rework", "Rework or delays"),
+            ("noticeable", "Noticeable impact on others"),
+            ("high_risk", "High risk (compliance, safety, reputation, or major cost)")
+        ],
+        "explanation": "Not all processes carry the same risk. Even a small or infrequent process may deserve attention if the consequences of failure are high."
+    },
+    {
+        "key": "consistency",
+        "text": "Is this process done the same way every time?",
+        "options": [
+            ("very_consistent", "Very consistent"),
+            ("mostly_consistent", "Mostly consistent with a few exceptions"),
+            ("often_varies", "Often varies depending on the situation or person"),
+            ("highly_variable", "Highly variable or unclear")
+        ],
+        "explanation": "Inconsistent processes are harder to train, harder to automate, and more likely to produce errors. High variability often signals a need for clearer guidance, better tools, or a more defined process."
+    },
+    {
+        "key": "tools",
+        "text": "How many tools or systems are typically used to complete this process?",
+        "options": [
+            ("one", "One tool"),
+            ("few", "A few tools"),
+            ("many", "Many tools"),
+            ("manual", "Mostly manual (email, spreadsheets, copy/paste)")
+        ],
+        "explanation": "Process breakdowns often happen when information moves between tools or is handled manually. Processes with lots of tool switching or manual steps may have opportunities for simplification or automation."
+    },
+    {
+        "key": "flagged",
+        "text": "Has this process been discussed as an issue before?",
+        "options": [
+            ("no", "No"),
+            ("informal", "Mentioned informally"),
+            ("multiple", "Raised multiple times"),
+            ("concern", "Actively causing concern")
+        ],
+        "explanation": "Recurring conversations about a process often signal unresolved issues. Known pain points are often high-value candidates for deeper analysis because people are already motivated for change."
+    },
+    {
+        "key": "improvement_benefit",
+        "text": "What would improving this process most likely improve?",
+        "options": [
+            ("time", "Time savings"),
+            ("errors", "Fewer errors"),
+            ("frustration", "Less frustration"),
+            ("consistency", "Better consistency"),
+            ("risk", "Reduced risk"),
+            ("experience", "Better experience for others")
+        ],
+        "multiple": True,
+        "explanation": "This helps us understand the potential value of improvement—not just the problem. Processes with clear improvement benefits are easier to prioritize and justify for deeper work."
+    }
+]
+
+# Process type labels (kept for backward compatibility)
 PROCESS_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "C": {
         "label": "Coordinating People / Requests Bouncing Around",
-        "questions": [
-            {"key": "entry_points", "prompt": "How many different places can requests come in? (1=one place, 5=many places)", "weight": 4},
-            {"key": "verbal_requests", "prompt": "How often do requests start verbally (meetings, hallway, calls)? (1=rare, 5=very often)", "weight": 4},
-            {"key": "ownership", "prompt": "How unclear is ownership of the next step? (1=clear, 5=unclear)", "weight": 5},
-            {"key": "intake_quality", "prompt": "How often do requests arrive missing key info? (1=rare, 5=often)", "weight": 4},
-            {"key": "routing", "prompt": "How often is work routed to the wrong person first? (1=rare, 5=often)", "weight": 4},
-            {"key": "visibility", "prompt": "How hard is it to see status without asking someone? (1=easy, 5=very hard)", "weight": 4},
-            {"key": "handoffs", "prompt": "How many handoffs happen end-to-end? (1=few, 5=many)", "weight": 2},
-            {"key": "waiting", "prompt": "How much time is spent waiting on others? (1=low, 5=high)", "weight": 3},
-            {"key": "exceptions", "prompt": "How often do 'special cases' break the normal flow? (1=rare, 5=constant)", "weight": 2},
-        ],
+        "questions": QUICK_LOOK_QUESTIONS
+    },
+    "P": {
+        "label": "Creation/Production",
+        "questions": QUICK_LOOK_QUESTIONS
     },
     "R": {
         "label": "Reporting / Analytics Pulls",
-        "questions": [
-            {"key": "frequency", "prompt": "How often is this report needed? (1=rare, 5=very frequent)", "weight": 2},
-            {"key": "sources", "prompt": "How many systems/sources feed the report? (1=few, 5=many)", "weight": 3},
-            {"key": "manual_work", "prompt": "How manual is the process? (1=mostly automated, 5=all manual)", "weight": 4},
-            {"key": "data_cleanliness", "prompt": "How messy/inconsistent is the input data? (1=clean, 5=messy)", "weight": 4},
-            {"key": "definitions", "prompt": "How unclear are metric definitions (what counts)? (1=clear, 5=unclear)", "weight": 3},
-            {"key": "stakeholders", "prompt": "How many people rely on it? (1=few, 5=many)", "weight": 2},
-        ],
+        "questions": QUICK_LOOK_QUESTIONS
     },
     "D": {
         "label": "Data Entry / Copying Between Systems",
-        "questions": [
-            {"key": "frequency", "prompt": "How often do you do this? (1=rare, 5=daily)", "weight": 2},
-            {"key": "repeat_steps", "prompt": "How repetitive are the steps? (1=unique, 5=very repetitive)", "weight": 4},
-            {"key": "sources", "prompt": "How many systems/tools do you copy between? (1=1-2, 5=many)", "weight": 3},
-            {"key": "errors", "prompt": "How error-prone is it? (1=low, 5=high)", "weight": 4},
-            {"key": "time_cost", "prompt": "How time-consuming is it? (1=minutes, 5=hours+)", "weight": 3},
-            {"key": "standardization", "prompt": "How inconsistent are inputs (formats, naming, missing fields)? (1=consistent, 5=inconsistent)", "weight": 3},
-        ],
+        "questions": QUICK_LOOK_QUESTIONS
     },
 }
 
@@ -141,22 +209,94 @@ def run_questionnaire(template_key: str) -> Dict[str, int]:
 
     return answers
 
-def score_answers(template_key: str, answers: Dict[str, int]) -> Dict[str, Any]:
-    tpl = PROCESS_TEMPLATES[template_key]
-    weighted_total = 0
-    weighted_max = 0
-
-    for q in tpl["questions"]:
-        key = q["key"]
-        weight = q.get("weight", 1)
-        weighted_total += answers.get(key, 0) * weight
-        weighted_max += 5 * weight
-
-    percent = (weighted_total / weighted_max) * 100 if weighted_max else 0.0
-    score_rounded = round(percent)  # 0–100
-    rec = recommendation_from_percent(percent)
-
-    return {"percent": percent, "score": score_rounded, "recommendation": rec}
+def score_answers(template_key: str, answers: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Score the new quick-look questions based on improvement priority.
+    Answers are now string values (e.g., 'rarely', 'frequently') or lists for multi-select.
+    Returns a dict with percent score and recommendation.
+    """
+    score = 0
+    max_score = 0
+    
+    # Frequency scoring (weight: 15)
+    freq = answers.get('frequency', '')
+    if freq:
+        max_score += 15
+        freq_scores = {'rarely': 5, 'occasionally': 8, 'frequently': 12, 'very_frequently': 15}
+        score += freq_scores.get(freq, 0)
+    
+    # Involvement scoring (weight: 15) - multi-select
+    involvement = answers.get('involvement', [])
+    if isinstance(involvement, str):
+        involvement = [involvement]
+    if involvement:
+        max_score += 15
+        involvement_score = len(involvement) * 4  # More people/teams = higher score
+        score += min(involvement_score, 15)
+    
+    # Frustration scoring (weight: 20)
+    frust = answers.get('frustration', '')
+    if frust:
+        max_score += 20
+        frust_scores = {'no_issues': 0, 'minor': 7, 'frequent': 15, 'painful': 20}
+        score += frust_scores.get(frust, 0)
+    
+    # Impact scoring (weight: 20)
+    impact = answers.get('impact', '')
+    if impact:
+        max_score += 20
+        impact_scores = {'minor': 5, 'rework': 10, 'noticeable': 15, 'high_risk': 20}
+        score += impact_scores.get(impact, 0)
+    
+    # Consistency scoring (weight: 10)
+    consistency = answers.get('consistency', '')
+    if consistency:
+        max_score += 10
+        consistency_scores = {'very_consistent': 0, 'mostly_consistent': 3, 'often_varies': 7, 'highly_variable': 10}
+        score += consistency_scores.get(consistency, 0)
+    
+    # Tools scoring (weight: 10)
+    tools = answers.get('tools', '')
+    if tools:
+        max_score += 10
+        tools_scores = {'one': 2, 'few': 5, 'many': 8, 'manual': 10}
+        score += tools_scores.get(tools, 0)
+    
+    # Flagged scoring (weight: 10)
+    flagged = answers.get('flagged', '')
+    if flagged:
+        max_score += 10
+        flagged_scores = {'no': 0, 'informal': 3, 'multiple': 7, 'concern': 10}
+        score += flagged_scores.get(flagged, 0)
+    
+    # Improvement benefit (multi-select) - bonus points
+    benefits = answers.get('improvement_benefit', [])
+    if isinstance(benefits, str):
+        benefits = [benefits]
+    if benefits:
+        # More potential benefits = slightly higher priority
+        benefit_bonus = min(len(benefits) * 2, 10)
+        score += benefit_bonus
+        max_score += 10
+    
+    # Calculate percentage
+    percent = (score / max_score * 100) if max_score > 0 else 0
+    
+    # Generate recommendation
+    if percent >= 70:
+        recommendation = "High priority – Strong candidate for deeper evaluation"
+    elif percent >= 50:
+        recommendation = "Medium priority – Consider for improvement when resources allow"
+    elif percent >= 30:
+        recommendation = "Low-medium priority – Monitor and revisit periodically"
+    else:
+        recommendation = "Low priority – Process appears relatively stable"
+    
+    return {
+        "percent": round(percent, 1),
+        "score": round(percent),
+        "recommendation": recommendation
+    }
 
 def top_drivers(template_key: str, answers: Dict[str, int], n: int = 3) -> List[str]:
     tpl = PROCESS_TEMPLATES[template_key]
@@ -318,7 +458,7 @@ def new_assessment(state: Dict[str, Any]) -> None:
         "score": scoring["score"],
         "recommendation": scoring["recommendation"],
         "suggestions": suggestions,
-        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "created_at": datetime.now().strftime("%Y-%m-%d"),
     }
     state["assessments"].append(assessment)
     # persist immediately so folder stays updated every session

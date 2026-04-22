@@ -3,25 +3,40 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome — Process Triage</title>
+    <title>Welcome - Process Triage</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
-      body { font-family: system-ui, -apple-system, Arial, sans-serif; padding: 2rem; }
-      .card { max-width: 640px; margin: 2rem auto; border: 1px solid #ddd; padding: 1.5rem; border-radius: 8px; }
+      body {
+        font-family: system-ui, -apple-system, Arial, sans-serif;
+        padding: 2rem;
+        min-height: 100vh;
+        background: linear-gradient(rgba(8, 20, 36, 0.55), rgba(8, 20, 36, 0.55)), url("{{ url_for('static', filename='welcome-background.png') }}") center center / cover no-repeat fixed !important;
+      }
+      .card {
+        max-width: 640px;
+        margin: 2rem auto;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+        background: rgba(250, 252, 255, 0.9);
+        backdrop-filter: blur(2px);
+      }
       .actions { margin-top: 1rem; }
       a.button { display: inline-block; margin-right: .5rem; padding: .5rem 1rem; background:#007bff; color:#fff; border-radius:4px; text-decoration:none }
       a.secondary { background:#6c757d }
     </style>
   </head>
   <body>
+    {% include '_master_menu.html' %}
     <div class="card">
       <h1>Welcome to Process Triage</h1>
-      <p>This tool helps you quickly evaluate and track processes. To get started please sign in or create a profile.</p>
+      <p style="margin-bottom: 1rem;">Think of this as a checkup, not a full exam. This app helps you quickly assess a process to understand its frequency, friction, risk, and improvement potential—without getting lost in the details. By classifying processes first, we can focus time and effort where it will make the biggest difference.</p>
+      <p style="margin-bottom: 1rem;">When automation potential is identified, you can choose to go deeper with AI to better understand pain points and explore where automation could help most.</p>
+      <p>To get started please sign in or create a profile.</p>
       <div class="actions">
         <a class="button" href="/user">Sign in / Create Profile</a>
-        <a class="button secondary" href="/enter?path=quick&guest=1">Try Quick Look (guest)</a>
-        <a class="button secondary" href="/user" title="Sign in required">Try Deep Evaluation (sign in required)</a>
       </div>
-      <p style="margin-top:1rem;color:#666">Returning users: sign in to see your dashboard and edit saved records.</p>
     </div>
   </body>
 </html>

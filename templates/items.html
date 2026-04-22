@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Items</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            line-height: 1.6;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 0.5rem; }
+        .item-card {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            background: #fafafa;
+        }
+        .deleted-compact {
+            background: #fff9f2;
+            border-color: #f1d5b4;
+            padding: 0.65rem 0.85rem;
+            margin-bottom: 0.55rem;
+        }
+        .deleted-compact .deleted-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .deleted-compact .deleted-main {
+            min-width: 230px;
+            flex: 1 1 auto;
+        }
+        .deleted-compact .deleted-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .deleted-compact .deleted-meta {
+            margin-top: 0.15rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+        .deleted-compact .item-actions {
+            margin-top: 0;
+        }
+        .item-card h2 { margin: 0 0 0.5rem 0; font-size: 1.15rem; }
+        .item-card .meta { font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
+        .item-card .field { margin: 0.25rem 0; }
+        .item-card .label { font-weight: bold; }
+        .item-actions { margin-top: 0.85rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .item-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 0.9rem;
+            min-height: 2.05rem;
+            box-sizing: border-box;
+        }
+        .item-actions a.view { background: #0d6efd; }
+        .item-actions a.view:hover { background: #0b5ed7; }
+        .item-actions a.edit { background: #198754; }
+        .item-actions a.edit:hover { background: #157347; }
+        .item-actions a.discuss { background: #6f42c1; }
+        .item-actions a.discuss:hover { background: #5a32a3; }
+        .item-actions a.deep-discuss { background: #9333ea; }
+        .item-actions a.deep-discuss:hover { background: #7e22ce; }
+        .item-actions form { display: inline-flex; }
+        .item-actions button.delete {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: #dc3545;
+            color: #fff;
+            border-radius: 4px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-height: 2.05rem;
+            box-sizing: border-box;
+        }
+        .item-actions button.delete:hover { background: #bb2d3b; }
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        .badge.deep { background: #dcfce7; color: #166534; }
+        .badge.status { background: #e5e7eb; color: #111827; }
+        .badge.status.submitted { background: #dcfce7; color: #166534; }
+        .badge.status.partial { background: #fff1d8; color: #92400e; }
+        .score { font-size: 1.1rem; font-weight: bold; color: #1d4ed8; }
+        .no-items { color: #888; font-style: italic; }
+        .nav-buttons { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        .nav-buttons a { display: inline-block; padding: 0.6rem 1.2rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: 500; }
+        .nav-buttons a:hover { background: #0056b3; }
+        .nav-buttons a.secondary { background: #6c757d; }
+        .nav-buttons a.secondary:hover { background: #545b62; }
+        details {
+            margin-top: 2rem;
+            padding: 0;
+        }
+        details > summary {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-weight: 600;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        details > summary:hover {
+            background: #e8e8e8;
+        }
+        details > summary::marker {
+            color: #555;
+        }
+        details > div {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+    <h1>My Submitted And Partial Items</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div style="margin-bottom: 1rem; padding: 0.75rem; border: 1px solid #b6d4fe; background: #e7f1ff; border-radius: 4px; color: #0a58ca;">
+                {% for message in messages %}
+                    <div>{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="nav-buttons">
+        <a href="{{ url_for('dashboard') }}" class="secondary">← Back to Dashboard</a>
+        <a href="{{ url_for('home') }}">+ Start New Process</a>
+    </div>
+    
+    <p>Total records: <strong>{{ items | length }}</strong></p>
+    <p style="margin-top: -0.5rem; color: #555;">
+        When you delete a submission, it moves to Recently Deleted. You can restore it any time before permanent deletion.
+        Submissions left in Recently Deleted are permanently deleted after {{ retention_days }} days (2 years).
+    </p>
+
+    {% if items %}
+        {% for item in items %}
+        <div class="item-card">
+            <h2>{{ item.name if item.name else '(Unnamed)' }}</h2>
+            <div class="meta">
+                ID: {{ item.id if item.id else 'N/A' }} &nbsp;|&nbsp;
+                Created: {{ item.created_at if item.created_at else (item.created if item.created else 'N/A') }} &nbsp;|&nbsp;
+                <span class="badge {{ item.path if item.path else '' }}">{{ item.path | upper if item.path else 'N/A' }}</span>
+                &nbsp;|&nbsp;
+                <span class="badge status {{ item.status if item.status else 'submitted' }}">{{ 'IN PROGRESS' if (item.status == 'partial') else ((item.status if item.status else 'submitted') | upper) }}</span>
+            </div>
+
+            {% if item.purpose %}
+            <div class="field"><span class="label">Purpose:</span> {{ item.purpose }}</div>
+            {% endif %}
+
+            {% if item.description %}
+            <div class="field"><span class="label">Description:</span> {{ item.description }}</div>
+            {% endif %}
+
+            {% if item.type %}
+            <div class="field"><span class="label">Process Type:</span> {{ item.type | process_type_label }}</div>
+            {% endif %}
+
+            {% if item.step_count %}
+            <div class="field"><span class="label">Step Count:</span> {{ item.step_count }}</div>
+            {% endif %}
+
+            {% if item.score %}
+                {% if item.score is mapping %}
+                <div class="field">
+                    <span class="label">Score:</span>
+                    <span class="score">{{ item.score.score if item.score.score is defined else item.score.percent | round(1) }}%</span>
+                </div>
+                {% if item.score.recommendation %}
+                <div class="field"><span class="label">Recommendation:</span> {{ item.score.recommendation }}</div>
+                {% endif %}
+                {% else %}
+                <div class="field"><span class="label">Score:</span> <span class="score">{{ item.score }}%</span></div>
+                {% if item.recommendation %}
+                <div class="field"><span class="label">Recommendation:</span> {{ item.recommendation }}</div>
+                {% endif %}
+            {% endif %}
+            {% elif item.recommendation %}
+            <div class="field"><span class="label">Recommendation:</span> {{ item.recommendation }}</div>
+            {% endif %}
+
+            {% if item.user and item.user.email %}
+            <div class="field"><span class="label">Submitted by:</span> {{ item.user.name if item.user.name else '' }} &lt;{{ item.user.email }}&gt;</div>
+            {% endif %}
+
+            {% if item.id %}
+            <div class="item-actions">
+                <a class="view" href="{{ url_for('view_record', rec_id=item.id) }}">View</a>
+                <a class="edit" href="{{ url_for('edit_record', rec_id=item.id) }}">Edit</a>
+                {% if item.llm_chat and item.llm_chat | length > 0 %}
+                    <a class="discuss" href="{{ url_for('record_discussion', rec_id=item.id) }}">Continue Discussion</a>
+                {% else %}
+                    <a class="deep-discuss" href="{{ url_for('record_discussion', rec_id=item.id, mode='deep') }}">Start Deep Discussion</a>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_record', rec_id=item.id) }}" onsubmit="return confirm('Move this submission to Recently Deleted? It will be permanently deleted after 2 years if not restored.');">
+                    <button class="delete" type="submit">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="no-items">No items found in the data store.</p>
+    {% endif %}
+
+    {% if deleted_items %}
+        <details>
+            <summary>Recently Deleted ({{ deleted_items | length }}) — Click to expand</summary>
+            <div>
+                <p style="color: #555; margin-bottom: 1rem;">These submissions are hidden from active lists and will be permanently deleted after 2 years unless restored.</p>
+                {% for item in deleted_items %}
+                <div class="item-card deleted-compact">
+                    <div class="deleted-row">
+                        <div class="deleted-main">
+                            <p class="deleted-title">{{ item.name if item.name else '(Unnamed)' }}</p>
+                            <div class="deleted-meta">
+                                ID: {{ item.id if item.id else 'N/A' }} &nbsp;|&nbsp;
+                                Deleted: {{ item.deleted_at | pretty_date if item.deleted_at else 'N/A' }} &nbsp;|&nbsp;
+                                Purges: {{ item.hard_delete_after if item.hard_delete_after else 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <form method="post" action="{{ url_for('restore_record', rec_id=item.id) }}">
+                                <button class="delete" type="submit" style="background: #198754;">Restore</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+    {% endif %}
+
+    <div class="nav-buttons" style="margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 2rem;">
+        <a href="{{ url_for('dashboard') }}" class="secondary">← Back to Dashboard</a>
+        <a href="{{ url_for('home') }}">+ Start New Process</a>
+    </div>
+</body>
+</html>

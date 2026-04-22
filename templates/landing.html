@@ -2,38 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Process Triage - Start</title>
+    <title>Welcome - Process Triage</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            line-height: 1.5;
+            min-height: 100vh;
+            padding: 0 1rem;
+            background: linear-gradient(rgba(8, 20, 36, 0.55), rgba(8, 20, 36, 0.55)), url("{{ url_for('static', filename='welcome-background.png') }}") center center / cover no-repeat fixed !important;
+            color: #1c2a3a;
+        }
+        .content-box { background: rgba(248, 251, 255, 0.95); padding: 1.5rem; border-radius: 6px; }
         h1 { text-align: center; }
-        .option { border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
-        .option:hover { background: #f9f9f9; }
+        .option { border: 1px solid rgba(100, 130, 150, 0.35); background: rgba(230, 240, 250, 0.85); color: #1c2a3a; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+        .option:hover { background: rgba(248, 251, 255, 0.98); }
         .submit { text-align: center; margin-top: 2rem; }
         button { padding: 0.5rem 1rem; font-size: 1rem; }
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     {% if user_name and user_email %}
         <div style="text-align:right; font-size:0.9rem;">
             Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
             <a href="/dashboard">Dashboard</a> |
-            <a href="/reset-password">Reset password</a> |
-            <a href="/logout">Logout</a>
+            <a href="/items">My Items</a> |
         </div>
     {% endif %}
-    <h1>Start a New Triage</h1>
-    <form method="get" action="/enter">
-        <div class="option">
-            <input type="radio" id="quick" name="path" value="quick" required>
-            <label for="quick"><strong>Quick Look</strong> – answer just a few questions for a fast recommendation.</label>
-        </div>
-        <div class="option">
-            <input type="radio" id="deep" name="path" value="deep" required>
-            <label for="deep"><strong>Deep Evaluation</strong> – go step-by-step through the full wizard.</label>
-        </div>
-        <div class="submit">
-            <button type="submit">Next</button>
-        </div>
-    </form>
+    <div class="content-box">
+        {% if user_name and user_email %}
+            <h1>Welcome Back to Process Triage</h1>
+        {% else %}
+            <h1>Welcome to Process Triage</h1>
+        {% endif %}
+        <p style="margin-bottom: 1rem;">Think of this as a checkup, not a full exam. This app helps you quickly assess a process to understand its frequency, friction, risk, and improvement potential—without getting lost in the details. By classifying processes first, we can focus time and effort where it will make the biggest difference.</p>
+        <p style="margin-bottom: 1rem;">When automation potential is identified, you can choose to go deeper with AI to better understand pain points and explore where automation could help most.</p>
+        {% if user_name and user_email %}
+            <div class="option">
+                <strong>Deep Evaluation</strong> - signed-in users start new triages in the full Deep Evaluation workflow.
+            </div>
+            <div class="submit">
+                <a href="{{ url_for('deep_evaluation') }}" style="display:inline-block;padding:0.5rem 1rem;border-radius:4px;background:#198754;color:#fff;text-decoration:none;font-weight:600;">Start Deep Evaluation</a>
+            </div>
+        {% else %}
+            <div style="border:1px solid #f0ad4e;background:#fff8e6;padding:0.7rem;border-radius:4px;margin-bottom:1rem;">
+                <strong>Guest mode:</strong> you can run Quick Look now. Sign in after scoring to save your triage and unlock Deep Evaluation.
+            </div>
+            <form method="get" action="{{ url_for('enter') }}">
+                <input type="hidden" name="path" value="quick">
+                <div class="option">
+                    <strong>Quick Look</strong> - answer a few focused questions for a fast recommendation.
+                </div>
+                <div class="submit">
+                    <button type="submit">Take a Quick Look</button>
+                </div>
+            </form>
+            <p style="text-align:center;margin-top:0.8rem;">
+                Want Deep Evaluation? <a href="{{ url_for('user_info') }}">Sign in or create an account</a>.
+            </p>
+        {% endif %}
+    </div>
 </body>
 </html>

@@ -1,0 +1,164 @@
+:root {
+    --bg: #f5f2eb;
+    --surface: #fcfbf8;
+    --surface-soft: #f1f4f3;
+    --border: #c9d4d1;
+    --text: #243235;
+    --muted: #607173;
+    --accent: #5f8f8a;
+    --accent-strong: #4b7470;
+    --accent-soft: #dfeceb;
+    --secondary: #7a8687;
+    --danger: #b64b53;
+}
+
+body {
+    background: var(--bg) !important;
+    color: var(--text) !important;
+    padding-top: var(--master-menu-offset, 68px);
+}
+
+.master-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.master-menu-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.master-menu-left,
+.master-menu-right {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.master-menu a {
+    text-decoration: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.28rem 0.62rem;
+    background: var(--surface-soft);
+    font-size: 0.92rem;
+}
+
+.master-menu a:hover {
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+a {
+    color: var(--accent-strong);
+}
+
+a:hover {
+    color: #3f625f;
+}
+
+.card,
+.details,
+.item-card,
+.chat-window,
+.save-section {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+h1,
+h2,
+h3 {
+    color: #1f3134;
+}
+
+button,
+a.button,
+input.button,
+.actions a,
+.nav-buttons a,
+.item-actions a,
+.composer button {
+    background: var(--accent) !important;
+    border: 1px solid var(--accent-strong) !important;
+    color: #ffffff !important;
+}
+
+button:hover,
+a.button:hover,
+input.button:hover,
+.actions a:hover,
+.nav-buttons a:hover,
+.item-actions a:hover,
+.composer button:hover {
+    background: var(--accent-strong) !important;
+}
+
+.actions a.logout,
+a.secondary,
+.nav-buttons a.secondary {
+    background: var(--secondary) !important;
+    border-color: #667173 !important;
+}
+
+.actions a.logout:hover,
+a.secondary:hover,
+.nav-buttons a.secondary:hover {
+    background: #646f71 !important;
+}
+
+.item-actions button.delete {
+    background: var(--danger) !important;
+    border-color: #984049 !important;
+}
+
+.item-actions button.delete:hover {
+    background: #983e47 !important;
+}
+
+.badge,
+.badge.deep,
+.badge.status,
+.badge.status.submitted,
+.badge.status.partial,
+.message.user,
+.message.assistant,
+.guest-prompt,
+.save-section,
+.option:hover {
+    background: var(--accent-soft) !important;
+}
+
+.message.user,
+.message.assistant,
+.guest-prompt,
+.save-section {
+    border-left-color: var(--accent) !important;
+}
+
+.meta,
+.header,
+.no-items {
+    color: var(--muted);
+}
+
+.score {
+    color: var(--accent-strong) !important;
+}
+
+p[style*="border-left:4px solid #007bff"] {
+    background: var(--surface-soft) !important;
+    border-left-color: var(--accent) !important;
+}

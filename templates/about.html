@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About This App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 980px; margin: 2rem auto; line-height: 1.6; padding: 0 1rem; }
+        .content { border: 1px solid #d6dfdd; border-radius: 10px; padding: 1.25rem 1.4rem; background: #fcfbf8; }
+        h1 { margin-top: 0; }
+        h2 { margin-top: 1.6rem; }
+        ul { margin-top: 0.4rem; }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+
+    <div class="content">
+        <h1>About This App</h1>
+        <p>This app is designed to help teams identify which processes are good candidates for automation - and, when they are, where automation, streamlining, or optimization could occur.</p>
+        <p>Many processes feel inefficient, manual, or frustrating, but not all of them are ready (or appropriate) for automation. This app helps you step back, evaluate, and prioritize, so time and effort are spent on improvements that actually provide value.</p>
+
+        <h2>What This App Helps You Do</h2>
+        <p>This app supports early-stage evaluation by helping you:</p>
+        <ul>
+            <li>Assess whether a process is a strong candidate for automation</li>
+            <li>Identify pain points such as repetition, bottlenecks, handoffs, or error-prone steps</li>
+            <li>Highlight opportunities for automation</li>
+            <li>Highlight opportunities for streamlining or simplification</li>
+            <li>Highlight opportunities for process standardization or optimization</li>
+            <li>Understand when a process may not be ready for automation yet</li>
+        </ul>
+        <p>The goal is clarity - not perfection.</p>
+
+        <h2>What This App Does Not Do</h2>
+        <p>This app does not:</p>
+        <ul>
+            <li>Automatically automate a process</li>
+            <li>Replace business analysis, engineering, or process owners</li>
+            <li>Guarantee that a process should or will be automated</li>
+            <li>Serve as final approval for automation decisions</li>
+        </ul>
+        <p>Automation decisions often require deeper analysis, stakeholder input, and technical review. This app helps you decide whether it is worth taking that next step.</p>
+
+        <h2>How to Use This App Effectively</h2>
+        <p>For best results:</p>
+        <ul>
+            <li>Describe the current process honestly, including pain points and constraints</li>
+            <li>Use this tool early, before investing significant time building a solution</li>
+            <li>Treat the output as guidance and recommendation, not a directive</li>
+        </ul>
+        <p>If the app suggests that automation may not be the right next step, that insight is just as valuable - it can prevent wasted effort and rework.</p>
+
+        <h2>Data &amp; Appropriate Use</h2>
+        <p>This app is intended to support appropriate internal process evaluation.</p>
+        <p>Avoid entering sensitive, personal, or restricted information unless approved for this context. Always follow your organization's data and privacy guidelines.</p>
+
+        <h2>A Living Tool</h2>
+        <p>This app is designed to evolve. As processes, tools, and organizational needs change, so will the way automation opportunities are identified. Feedback and real-world use help inform future improvements.</p>
+    </div>
+</body>
+</html>

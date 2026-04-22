@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>How To Use This App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1060px; margin: 2rem auto; line-height: 1.55; padding: 0 1rem; }
+        .content { border: 1px solid #d6dfdd; border-radius: 10px; padding: 1.25rem 1.4rem; background: #fcfbf8; }
+        h1 { margin-top: 20px; }
+        .examples {
+            margin-top: 0.8rem;
+            display: grid;
+            gap: 0.55rem;
+        }
+        details {
+            border: 1px solid #c9d4d1;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 0.75rem 0.9rem;
+            font-weight: 700;
+            background: #edf3f2;
+            border-bottom: 1px solid #d8e2e0;
+        }
+        summary::-webkit-details-marker { display: none; }
+        .example-body { padding: 0.8rem 0.9rem 1rem 0.9rem; }
+        .example-body h3 { margin: 0.4rem 0 0.4rem 0; font-size: 1rem; }
+        .example-body ul { margin: 0.35rem 0 0.85rem 1.15rem; }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+
+    <div class="content">
+        <h1>How To Use This App</h1>
+        <p>This page helps users understand how to think about processes that fit this tool.</p>
+
+        <h2>Example Processes</h2>
+        <p>Click any example to expand details.</p>
+
+        <div class="examples">
+            <details>
+                <summary>Example 1: Creating a Promotional Flyer</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Create a flyer to promote an event or initiative and distribute it through appropriate channels.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Identify the purpose of the flyer and the target audience</li>
+                        <li>Gather required content (event details, messaging, branding assets)</li>
+                        <li>Draft initial layout and visual concept</li>
+                        <li>Review content for accuracy and brand alignment</li>
+                        <li>Revise based on feedback</li>
+                        <li>Finalize design</li>
+                        <li>Distribute via print, email, web, or social channels</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Repetitive content edits</li>
+                        <li>Manual approval cycles</li>
+                        <li>Recreating similar designs repeatedly</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 2: Publishing an Internal News Article</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Publish an internal article to communicate updates, events, or announcements to employees.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Identify story topic and communication goal</li>
+                        <li>Collect information and quotes from stakeholders</li>
+                        <li>Draft article content</li>
+                        <li>Edit for clarity, tone, and accuracy</li>
+                        <li>Submit for review and approval</li>
+                        <li>Revise based on feedback</li>
+                        <li>Publish to internal platform</li>
+                        <li>Share link through appropriate channels</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Multiple reviewers with overlapping feedback</li>
+                        <li>Manual formatting and reposting</li>
+                        <li>Tracking approval status</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 3: Onboarding a New Employee</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Prepare systems, access, and information needed for a new hire to begin work successfully.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Receive notification of new hire and start date</li>
+                        <li>Create or request system accounts and permissions</li>
+                        <li>Prepare equipment and workspace</li>
+                        <li>Enroll employee in required systems and training</li>
+                        <li>Send welcome and onboarding information</li>
+                        <li>Conduct first-day orientation</li>
+                        <li>Complete required documentation and acknowledgments</li>
+                        <li>Monitor onboarding completion and follow up as needed</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Duplicate data entry across systems</li>
+                        <li>Tracking completion across multiple tools</li>
+                        <li>Timing dependencies between steps</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 4: Processing a Service Request</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Receive, evaluate, and respond to requests submitted by internal users.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>User submits request through designated channel</li>
+                        <li>Request is logged and categorized</li>
+                        <li>Review request for completeness and eligibility</li>
+                        <li>Determine priority and routing</li>
+                        <li>Assign request to appropriate team or individual</li>
+                        <li>Complete requested work</li>
+                        <li>Communicate outcome to requester</li>
+                        <li>Close request and record outcome</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Incomplete submissions</li>
+                        <li>Manual routing decisions</li>
+                        <li>Repetitive status updates</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 5: Updating a Standard Operating Procedure (SOP)</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Revise and publish updates to an existing process document.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Identify need for update or improvement</li>
+                        <li>Review current documentation</li>
+                        <li>Propose changes</li>
+                        <li>Validate changes with subject-matter experts</li>
+                        <li>Update documentation</li>
+                        <li>Review for accuracy and consistency</li>
+                        <li>Approve final version</li>
+                        <li>Publish updated documentation</li>
+                        <li>Notify affected stakeholders</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Version control issues</li>
+                        <li>Repeated review cycles</li>
+                        <li>Communicating changes effectively</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 6: Launching a New Internal Tool or App</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Plan, build, and roll out a new internal tool to support business needs.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Identify business need or problem</li>
+                        <li>Gather requirements from stakeholders</li>
+                        <li>Evaluate existing tools or solutions</li>
+                        <li>Define scope and success criteria</li>
+                        <li>Design solution</li>
+                        <li>Build or configure tool</li>
+                        <li>Test functionality and usability</li>
+                        <li>Address defects or gaps</li>
+                        <li>Prepare documentation and training</li>
+                        <li>Launch tool</li>
+                        <li>Monitor adoption and performance</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Scope creep</li>
+                        <li>Manual testing and feedback collection</li>
+                        <li>Coordinating across teams</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 7: Building a New Software Application (End-to-End)</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Design, develop, and deploy a new software system for organizational use.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Define problem statement and business objectives</li>
+                        <li>Conduct stakeholder interviews and requirements gathering</li>
+                        <li>Analyze feasibility and technical constraints</li>
+                        <li>Design system architecture and user experience</li>
+                        <li>Develop software components</li>
+                        <li>Integrate with existing systems</li>
+                        <li>Test functionality, security, and performance</li>
+                        <li>Address defects and refinements</li>
+                        <li>Deploy to production environment</li>
+                        <li>Provide documentation and training</li>
+                        <li>Monitor, support, and iterate</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Manual handoffs between teams</li>
+                        <li>Repetitive testing activities</li>
+                        <li>Inconsistent requirement documentation</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>Example 8: Approving a Purchase Request</summary>
+                <div class="example-body">
+                    <h3>Process Overview</h3>
+                    <p>Evaluate and approve requests to purchase goods or services.</p>
+                    <h3>High-Level Steps</h3>
+                    <ul>
+                        <li>Submit purchase request with justification</li>
+                        <li>Review request for completeness</li>
+                        <li>Validate budget availability</li>
+                        <li>Route request for required approvals</li>
+                        <li>Approve, deny, or request changes</li>
+                        <li>Notify requester of decision</li>
+                        <li>Initiate procurement if approved</li>
+                        <li>Record transaction for reporting and audit purposes</li>
+                    </ul>
+                    <h3>Typical Pain Points</h3>
+                    <ul>
+                        <li>Approval delays</li>
+                        <li>Re-entering information across systems</li>
+                        <li>Lack of visibility into request status</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+    </div>
+</body>
+</html>

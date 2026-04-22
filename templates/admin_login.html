@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 560px; margin: 2.5rem auto; line-height: 1.5; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; }
+        label { display: block; margin-top: 0.8rem; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 0.5rem; box-sizing: border-box; }
+        .submit { text-align: center; margin-top: 1.2rem; }
+        .error { color: #b00020; margin-top: 1rem; }
+        .success { color: #146c43; margin-top: 1rem; }
+        .helper { margin-top: 0.9rem; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+    <h1>Admin Login</h1>
+    <p>Use an administrator account to access database administration tools.</p>
+
+    <div class="card">
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+            <div class="success">{{ success }}</div>
+        {% endif %}
+
+        <form method="post">
+            <label for="email">Admin email</label>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <div class="submit">
+                <button type="submit">Sign In As Admin</button>
+            </div>
+        </form>
+    </div>
+
+    <p class="helper"><a href="{{ url_for('user_info') }}">Back to user sign in</a></p>
+</body>
+</html>

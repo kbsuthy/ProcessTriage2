@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Quick Look – Start</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
         label { display: block; margin-top: 1rem; }
@@ -13,9 +14,10 @@
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     {% if user_name and user_email %}
         <div style="text-align:right; font-size:0.9rem;">
-            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; <a href="/reset-password">(reset pw)</a> <a href="/logout">(logout)</a>
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
         </div>
     {% endif %}
     <h1>Quick Look</h1>
@@ -29,6 +31,7 @@
         <div class="error">{{ error }}</div>
     {% endif %}
     <form method="post">
+        <input type="hidden" id="cancel_action" name="cancel_action" value="">
         <label for="process_name">Process name <span style="color: red">*</span></label>
         <input type="text" id="process_name" name="process_name" value="{{ name or '' }}" required>
 
@@ -40,12 +43,29 @@
             {% endfor %}
         </select>
 
-        <label for="purpose">Brief description of purpose <span style="color: red">*</span></label>
+        <label for="purpose">Brief description of process purpose <span style="color: red">*</span></label>
         <input type="text" id="purpose" name="purpose" value="{{ purpose or '' }}" required>
 
-        <div class="submit">
+        <div class="submit" style="display:flex; justify-content:center; gap:1rem;">
             <button type="submit">Continue &rarr;</button>
+            <button type="button" style="padding:0.5rem 1rem; border:1px solid #999; border-radius:4px; color:#333; background:#f5f5f5; cursor:pointer;" onclick="handleCancelChoice();">Cancel</button>
         </div>
     </form>
+    <script>
+        function handleCancelChoice() {
+            const saveFirst = confirm('Do you want to save your progress before closing?\n\nOK = Save Before Closing\nCancel = More options');
+            const actionField = document.getElementById('cancel_action');
+            if (saveFirst) {
+                actionField.value = 'save_before_closing';
+                document.forms[0].submit();
+                return;
+            }
+            const discard = confirm('Close without saving?\n\nOK = Close without saving\nCancel = Keep editing');
+            if (discard) {
+                actionField.value = 'close_without_saving';
+                document.forms[0].submit();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Deep Evaluation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
         label { display: block; margin-top: 1rem; }
@@ -10,12 +11,30 @@
         .error { color: red; margin-top: 1rem; }
         .submit { text-align: center; margin-top: 2rem; }
         button { padding: 0.5rem 1rem; font-size: 1rem; }
+        .help-icon {
+            margin-left: 0.4rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 1px solid #6c757d;
+            border-radius: 50%;
+            background: #fff;
+            color: #333;
+            font-size: 0.8rem;
+            font-weight: bold;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     {% if user_name and user_email %}
         <div style="text-align:right; font-size:0.9rem;">
-            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; <a href="/reset-password">(reset pw)</a> <a href="/logout">(logout)</a>
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
         </div>
     {% endif %}
     {% if is_guest %}
@@ -34,6 +53,7 @@
         <div class="error">{{ error }}</div>
     {% endif %}
     <form method="post">
+        <input type="hidden" id="cancel_action" name="cancel_action" value="">
         {% if user_name and user_email %}
             <input type="hidden" name="user_name" value="{{ user_name }}">
             <input type="hidden" name="user_email" value="{{ user_email }}">
@@ -52,56 +72,117 @@
         <label for="process_name">Process name <span style="color: red">*</span></label>
         <input type="text" id="process_name" name="process_name" value="{{ name or '' }}" required>
 
-        <label for="purpose">Brief description of purpose <span style="color: red">*</span></label>
-        <input type="text" id="purpose" name="purpose" value="{{ purpose or '' }}" required>
-
-        <label for="step1">First step description <span style="color: red">*</span></label>
-        <textarea id="step1" name="step1" rows="3" required>{{ step or '' }}</textarea>
-
-        <label for="description">Full process description <span style="color: red">*</span></label>
-        <textarea id="description" name="description" rows="4" required>{{ description or '' }}</textarea>
-
-        <label for="step_count">Approximate number of steps <span style="color: red">*</span></label>
-        <input type="number" id="step_count" name="step_count" min="1" value="{{ step_count or '' }}" required>
+        <label for="description">Full process description <span style="color: red">*</span>
+            <button type="button" class="help-icon" aria-label="Help for Full Process Description" onclick="showDescriptionHelp()">?</button>
+        </label>
+        <textarea id="description" name="description" rows="6" required>{{ description if description else '1. \n2. \n3. ' }}</textarea>
 
         <label for="process_type">Process type <span style="color: red">*</span></label>
-        <select id="process_type" name="process_type" required onchange="showQuestions()">
+        <select id="process_type" name="process_type" required>
             <option value="" disabled {{ 'selected' if not selected_type else '' }}>-- choose --</option>
             {% for key, tpl in templates.items() %}
                 <option value="{{ key }}" {% if selected_type==key %}selected{% endif %}>{{ tpl.label }}</option>
             {% endfor %}
         </select>
 
-        {% for key, tpl in templates.items() %}
-            <div class="question-block" id="block_{{ key }}" style="display: none;">
-                <h3>{{ tpl.label }} questions</h3>
-                {% for q in tpl.questions %}
-                    <label for="answer_{{ q.key }}">{{ q.prompt }} (1–5)</label>
-                    <input type="number" id="answer_{{ q.key }}" name="answer_{{ q.key }}" min="1" max="5"
-                           value="{% if values and ('answer_' + q.key) in values %}{{ values['answer_' + q.key] }}{% else %}{{ request.form.get('answer_' + q.key, '') }}{% endif %}"
-                           required>
-                {% endfor %}
-            </div>
-        {% endfor %}
+        <p style="margin:1.5rem 0; padding:0.8rem; background:#f8f9fa; border-left:4px solid #007bff;">
+            <em>You don't need to know every step of the process to answer these questions. Quick, high-level answers are exactly what we're looking for.</em>
+        </p>
 
-        <div class="submit">
+        {% if selected_type and templates[selected_type].questions %}
+            {% for q in templates[selected_type].questions %}
+                <div style="margin:1.5rem 0; padding:1rem; border:1px solid #ddd; border-radius:4px; background:#fafafa;">
+                    <label style="font-weight:bold; font-size:1.05rem; margin-bottom:0.8rem; display:block;">
+                        {{ loop.index }}. {{ q.text }}
+                    </label>
+                    
+                    {% if q.get('multiple') %}
+                        {# Multi-select checkboxes #}
+                        <div style="margin:0.5rem 0;">
+                            {% for val, label in q.options %}
+                            <div style="margin:0.3rem 0;">
+                                <input type="checkbox" name="{{ q.key }}" value="{{ val }}" id="deep_{{ q.key }}_{{ val }}"
+                                       {% if values and q.key in values and val in values[q.key] %}checked{% endif %}>
+                                <label for="deep_{{ q.key }}_{{ val }}" style="font-weight:normal; display:inline; margin-left:0.3rem;">{{ label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {# Single-select dropdown #}
+                        <select name="{{ q.key }}" id="deep_{{ q.key }}" required style="width:100%; padding:0.5rem; margin:0.5rem 0; font-size:1rem;">
+                            <option value="">-- Select an option --</option>
+                            {% for val, label in q.options %}
+                            <option value="{{ val }}" {% if values and values.get(q.key) == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+
+                    <p style="font-size:0.9rem; color:#666; margin-top:0.8rem; padding-left:0.5rem; border-left:3px solid #dee2e6;">
+                        <strong>Why your answer matters:</strong> {{ q.explanation }}
+                    </p>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="submit" style="display:flex; justify-content:center; gap:1rem;">
             <button type="submit">Save &amp; Continue</button>
+            <button type="button" style="padding:0.5rem 1rem; border:1px solid #999; border-radius:4px; color:#333; background:#f5f5f5; cursor:pointer;" onclick="handleCancelChoice();">Cancel</button>
         </div>
     </form>
-
     <script>
-        function showQuestions() {
-            const sel = document.getElementById('process_type').value;
-            document.querySelectorAll('.question-block').forEach(block => {
-                const show = (block.id === 'block_' + sel);
-                block.style.display = show ? 'block' : 'none';
-                block.querySelectorAll('input').forEach(inp => inp.disabled = !show);
+        function showDescriptionHelp() {
+            alert('Please write down the high-level steps of your process in the order they are completed. For ideas of how to do this, you can visit our "How To" tab at the top of this screen.');
+        }
+
+        function setupAutoNumberedSteps() {
+            const field = document.getElementById('description');
+            if (!field) {
+                return;
+            }
+
+            field.addEventListener('keydown', function(event) {
+                if (event.key !== 'Enter' || event.shiftKey) {
+                    return;
+                }
+
+                const start = field.selectionStart;
+                const end = field.selectionEnd;
+                const value = field.value;
+                const before = value.slice(0, start);
+                const lineStart = before.lastIndexOf('\n') + 1;
+                const currentLine = value.slice(lineStart, start);
+                const match = currentLine.match(/^\s*(\d+)\.\s?.*$/);
+
+                if (!match) {
+                    return;
+                }
+
+                const nextStep = Number(match[1]) + 1;
+                const insertion = `\n${nextStep}. `;
+
+                event.preventDefault();
+                field.value = value.slice(0, start) + insertion + value.slice(end);
+                const caret = start + insertion.length;
+                field.setSelectionRange(caret, caret);
             });
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.question-block input').forEach(inp => inp.disabled = true);
-            if (document.getElementById('process_type').value) showQuestions();
-        });
+
+        document.addEventListener('DOMContentLoaded', setupAutoNumberedSteps);
+
+        function handleCancelChoice() {
+            const saveFirst = confirm('Do you want to save your progress before closing?\n\nOK = Save Before Closing\nCancel = More options');
+            const actionField = document.getElementById('cancel_action');
+            if (saveFirst) {
+                actionField.value = 'save_before_closing';
+                document.forms[0].submit();
+                return;
+            }
+            const discard = confirm('Close without saving?\n\nOK = Close without saving\nCancel = Keep editing');
+            if (discard) {
+                actionField.value = 'close_without_saving';
+                document.forms[0].submit();
+            }
+        }
     </script>
 </body>
 </html>

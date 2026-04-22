@@ -1,0 +1,18 @@
+[
+  {
+    "first_name": "K",
+    "last_name": "Gardener",
+    "name": "K Gardener",
+    "email": "kyrabeth10@yahoo.com",
+    "password_hash": "scrypt:32768:8:1$ApvUdVCKEu1XD0Bl$4944af22db0b8f414dd26d324501175948fce6d96ec6d2875d5e6ff305d7368911389ebcdefaee9c30ffd18c3393bbc769450234dbeb3f14833f609b90bf712f",
+    "created": "2026-03-20"
+  },
+  {
+    "first_name": "Kyra",
+    "last_name": "Sutherland",
+    "name": "Kyra Sutherland",
+    "email": "kyra.sutherland94@gmail.com",
+    "password_hash": "scrypt:32768:8:1$dAHzdC0VTawd2slo$1444ddbad2e8f2739ec772ae9bf7e52352deb4fc658a0a94955e857e3771b9530ff852945cbcbd29a38435a958e4f0f150346ccfd55e826e69ace29c194901cc",
+    "created": "2026-03-20"
+  }
+]

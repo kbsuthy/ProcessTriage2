@@ -1,0 +1,44 @@
+<nav class="master-menu" role="navigation" aria-label="Primary">
+    <div class="master-menu-inner">
+        <div class="master-menu-left">
+            <a href="{{ url_for('home') }}">Home</a>
+            {% if session.get('user') %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('items') }}">My Submissions</a>
+                <a href="{{ url_for('feedback_form') }}">Send Feedback</a>
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('admin_db_view') }}">Admin</a>
+                {% endif %}
+            {% endif %}
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('how_to') }}">How To</a>
+        </div>
+        <div class="master-menu-right">
+            {% if session.get('user') %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% elif request.endpoint not in ('home', 'user_info') %}
+                <a href="{{ url_for('user_info') }}">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<script>
+    (function applyMasterMenuOffset() {
+        function updateOffset() {
+            const menu = document.querySelector('.master-menu');
+            if (!menu) {
+                return;
+            }
+            const height = Math.ceil(menu.getBoundingClientRect().height);
+            document.documentElement.style.setProperty('--master-menu-offset', `${height + 12}px`);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateOffset);
+        } else {
+            updateOffset();
+        }
+
+        window.addEventListener('resize', updateOffset);
+    })();
+</script>

@@ -3,37 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>User Information</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; }
-        label { display: block; margin-top: 1rem; }
-        input[type="text"] { width: 100%; padding: 0.5rem; }
+        body { font-family: Arial, sans-serif; max-width: 720px; margin: 2rem auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; }
+        .card h2 { margin-top: 0; }
+        label { display: block; margin-top: 0.75rem; }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 0.5rem; box-sizing: border-box; }
         .error { color: red; margin-top: 1rem; }
         .submit { text-align: center; margin-top: 2rem; }
         button { padding: 0.5rem 1rem; font-size: 1rem; }
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     <h1>Welcome</h1>
-    <p>Before we start, please tell us who you are.</p>
+    <p>Create an account or sign in to view your saved submissions and discussion history.</p>
     {% if error %}
         <div class="error">{{ error }}</div>
     {% endif %}
-    <form method="post">
-        <label for="user_name">Your name <span style="color: red">*</span></label>
-        <input type="text" id="user_name" name="user_name" value="{{ name or '' }}" required>
+    <div class="grid">
+        <div class="card">
+            <h2>Create Account</h2>
+            <form method="post">
+                <input type="hidden" name="auth_mode" value="signup">
 
-        <label for="user_email">Your email <span style="color: red">*</span></label>
-        <input type="text" id="user_email" name="user_email" value="{{ email or '' }}" required>
+                <label for="user_first_name">First name <span style="color: red">*</span></label>
+                <input type="text" id="user_first_name" name="user_first_name" value="{{ first_name or '' }}" required>
 
-        <label for="user_password">Password <span style="color: red">*</span></label>
-        <input type="password" id="user_password" name="user_password" value="" required>
+                <label for="user_last_name">Last name <span style="color: red">*</span></label>
+                <input type="text" id="user_last_name" name="user_last_name" value="{{ last_name or '' }}" required>
 
-        <label for="user_password_confirm">Confirm password <span style="color: red">*</span></label>
-        <input type="password" id="user_password_confirm" name="user_password_confirm" value="" required>
+                <label for="signup_email">Email <span style="color: red">*</span></label>
+                <input type="email" id="signup_email" name="user_email" value="{{ email or '' }}" required>
 
-        <div class="submit">
-            <button type="submit">Continue</button>
+                <label for="signup_password">Password <span style="color: red">*</span></label>
+                <input type="password" id="signup_password" name="user_password" value="" required>
+
+                <label for="user_password_confirm">Confirm password <span style="color: red">*</span></label>
+                <input type="password" id="user_password_confirm" name="user_password_confirm" value="" required>
+
+                <div class="submit">
+                    <button type="submit">Create Account</button>
+                </div>
+            </form>
         </div>
-    </form>
+
+        <div class="card">
+            <h2>Sign In</h2>
+            <form method="post">
+                <input type="hidden" name="auth_mode" value="login">
+
+                <label for="login_email">Email <span style="color: red">*</span></label>
+                <input type="email" id="login_email" name="user_email" value="{{ email or '' }}" required>
+
+                <label for="login_password">Password <span style="color: red">*</span></label>
+                <input type="password" id="login_password" name="user_password" value="" required>
+
+                <div class="submit">
+                    <button type="submit">Sign In</button>
+                </div>
+            </form>
+            <p style="margin-top:0.8rem; text-align:center;">
+                <a href="{{ url_for('forgot_password') }}">Forgot password?</a>
+            </p>
+            <p style="margin-top:0.3rem; text-align:center;">
+                <a href="{{ url_for('admin_login') }}">Admin login</a>
+            </p>
+        </div>
+    </div>
 </body>
 </html>

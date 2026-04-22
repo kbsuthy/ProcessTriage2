@@ -3,34 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <title>Deep Evaluation Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; line-height: 1.5; }
         h1 { text-align: center; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
         .details { border: 1px solid #ccc; padding: 1rem; border-radius: 4px; }
+        .score-explanation { margin-top: 1rem; padding: 1rem; background: #f0f7ff; border-left: 4px solid #0066cc; border-radius: 4px; }
+        .score-explanation h4 { margin-top: 0; color: #0066cc; }
+        .score-explanation ul { margin: 0.5rem 0; padding-left: 1.5rem; font-size: 0.95rem; }
+        .save-section { border: 1px solid #28a745; padding: 1.5rem; border-radius: 4px; background: #f0f9f6; }
+        .save-section h2 { color: #28a745; margin-top: 0; }
         .actions { text-align: center; margin-top: 2rem; }
-        a.button { display: inline-block; padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        a.button, input.button { display: inline-block; padding: 0.5rem 1rem; margin: 0 0.25rem; background: #007bff; color: white; text-decoration: none; border: none; border-radius: 4px; cursor: pointer; }
+        input.button { background: #28a745; }
+        input.button:hover { background: #218838; }
+        a.button:hover { background: #0056b3; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+        .form-group input { display: block; width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .error { color: #dc3545; margin-bottom: 1rem; padding: 0.5rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; }
+        .guest-prompt { margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; }
     </style>
 </head>
 <body>
-    {% if record.user %}
+    {% include '_master_menu.html' %}
+    {% if record.user.email and not is_guest %}
         <div style="text-align:right; font-size:0.9rem;">
-            Logged in as <strong>{{ record.user.name }}</strong> &lt;{{ record.user.email }}&gt; <a href="/logout">(logout)</a>
+            Logged in as <strong>{{ record.user.name }}</strong> &lt;{{ record.user.email }}&gt;
         </div>
     {% endif %}
-    <h1>Deep Evaluation Saved</h1>
-    <div class="details">
-        <p><strong>User:</strong> {{ record.user.name }} &lt;{{ record.user.email }}&gt;</p>
-        <p><strong>Process:</strong> {{ record.name }}</p>
-        <p><strong>Purpose:</strong> {{ record.purpose }}</p>
-        <p><strong>Step 1:</strong> {{ record.steps[0] }}</p>
-        <p><strong>Description:</strong> {{ record.description }}</p>
-        <p><strong>Steps count:</strong> {{ record.step_count }}</p>
-        <p><strong>Created:</strong> {{ record.created }}</p>
-        <p><strong>Score:</strong> {{ percent }}%</p>
-        <p><strong>Recommendation:</strong> {{ recommendation }}</p>
-    </div>
-    <div class="actions">
-        <a class="button" href="{{ url_for('home') }}">Start Over</a>
-    </div>
+    <h1>Deep Evaluation Result</h1>
+    
+    {% if is_guest %}
+        <div class="container">
+            <!-- Left: Result Details -->
+            <div class="details">
+                <h3>Your Assessment</h3>
+                <p><strong>Process:</strong> {{ record.name }}</p>
+                <p><strong>Purpose:</strong> {{ record.purpose }}</p>
+                <p><strong>Process Type:</strong> {{ record.type | process_type_label }}</p>
+                <p><strong>Description:</strong> {{ record.description }}</p>
+                <p><strong>Sscore-explanation">
+                    <h4>What This Score Means</h4>
+                    <p>Your score reflects how much improvement potential this process has. It's calculated based on:</p>
+                    <ul>
+                        <li><strong>Frequency</strong> – how often the process runs</li>
+                        <li><strong>Involvement</strong> – how many people and teams are involved</li>
+                        <li><strong>Frustration</strong> – pain points and user dissatisfaction</li>
+                        <li><strong>Impact</strong> – consequences of process failures or rework</li>
+                        <li><strong>Consistency</strong> – how predictable and standardized the process is</li>
+                        <li><strong>Tools & Systems</strong> – complexity of the tooling landscape</li>
+                        <li><strong>Compliance & Flags</strong> – any flagged risk or regulatory concerns</li>
+                        <li><strong>Improvement Potential</strong> – identified opportunities for automation or streamlining</li>
+                    </ul>
+                    <p><strong>Higher scores</strong> indicate processes with more urgent improvement opportunities.</p>
+                </div>
+                <div>
+                <p><strong>Score:</strong> <strong>{{ percent }}%</strong></p>
+                <p><strong>Recommendation:</strong> {{ recommendation }}</p>
+                <div class="guest-prompt">
+                    <p><strong>Login is required to save triages and access Deep Dive evaluations.</strong> Create an account or log in to unlock these features.</p>
+                </div>
+            </div>
+            
+            <!-- Right: Save/Login Form -->
+            <div class="save-section">
+                <h2>Save Your Result</h2>
+                <p>Create an account to save this deep evaluation and access all your assessments.</p>
+                {% if error %}
+                    <div class="error">{{ error }}</div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('quick_save_guest') }}">
+                    <div class="form-group">
+                        <label for="first_name">First Name:</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ first_name or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name:</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ last_name or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address:</label>
+                        <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password_confirm">Confirm Password:</label>
+                        <input type="password" id="password_confirm" name="password_confirm" required>
+                    </div>
+                    <input type="submit" class="button" value="Save & Create Account">
+                </form>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <a class="button" href="{{ url_for('home') }}">Exit to Start Menu</a>
+            <a class="button" href="{{ url_for('user_info') }}">Create Account/Log In</a>
+        </div>
+    {% else %}
+        <!-- Non-guest view (logged in) -->
+        <div class="details">
+            <p><strong>User:</strong> {{ record.user.name if record.user else '' }} &lt;{{ record.user.email if record.user else '' }}&gt;</p>
+            <p><strong>Process:</strong> {{ record.name }}</p>
+            <p><strong>Purpose:</strong> {{ record.purpose }}</p>
+            {% if record.steps %}
+            <p><strong>Step 1:</strong> {{ record.steps[0] }}</p>
+            {% endif %}
+            <p><strong>Description:</strong> {{ record.description }}</p>
+            <p><strong>Created:</strong> {{ (record.updated or record.created) | pretty_date }}</p>
+            <p><strong>Score:</strong> {{ percent }}%</p>
+            <p><strong>Recommendation:</strong> {{ recommendation }}</p>
+            <div class="score-explanation">
+                <h4>What This Score Means</h4>
+                <p>Your score reflects how much improvement potential this process has. It's calculated based on:</p>
+                <ul>
+                    <li><strong>Frequency</strong> – how often the process runs</li>
+                    <li><strong>Involvement</strong> – how many people and teams are involved</li>
+                    <li><strong>Frustration</strong> – pain points and user dissatisfaction</li>
+                    <li><strong>Impact</strong> – consequences of process failures or rework</li>
+                    <li><strong>Consistency</strong> – how predictable and standardized the process is</li>
+                    <li><strong>Tools & Systems</strong> – complexity of the tooling landscape</li>
+                    <li><strong>Compliance & Flags</strong> – any flagged risk or regulatory concerns</li>
+                    <li><strong>Improvement Potential</strong> – identified opportunities for automation or streamlining</li>
+                </ul>
+                <p><strong>Higher scores</strong> indicate processes with more urgent improvement opportunities.</p>
+            </div>
+        </div>
+        <div class="actions">
+            <a class="button" href="{{ url_for('record_discussion', rec_id=record.id, mode='deep') }}">Back to Discussion</a>
+            <a class="button" href="{{ url_for('deep_edit', rec_id=record.id) }}">Refine Analysis</a>
+            <a class="button" href="{{ url_for('dashboard') }}">Return to Dashboard</a>
+            <a class="button" href="{{ url_for('home') }}">Start Over</a>
+        </div>
+    {% endif %}
 </body>
 </html>

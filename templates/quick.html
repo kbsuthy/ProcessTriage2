@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Quick Look</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
         body { font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; line-height: 1.5; }
         label { display: block; margin-top: 1rem; }
@@ -13,9 +14,10 @@
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     {% if user_name and user_email %}
         <div style="text-align:right; font-size:0.9rem;">
-            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; <a href="/reset-password">(reset pw)</a> <a href="/logout">(logout)</a>
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
         </div>
     {% endif %}
     {% if is_guest %}
@@ -25,11 +27,6 @@
     {% endif %}
     <h1>Quick Look</h1>
     <p><a href="{{ url_for('quick_start') }}">← Back</a></p>
-    {% if user_name and user_email %}
-        <p>Pick a process name, select a type, and answer a few short questions.</p>
-    {% else %}
-        <p>Enter your name/email, a process name, pick a type, and answer a few short questions.</p>
-    {% endif %}
     {% if error %}
         <div class="error">{{ error }}</div>
         {% if debug %}
@@ -46,6 +43,7 @@
         {% endif %}
     {% endif %}
     <form method="post">
+        <input type="hidden" id="cancel_action" name="cancel_action" value="">
         {% if user_name and user_email %}
             <input type="hidden" name="user_name" value="{{ user_name }}">
             <input type="hidden" name="user_email" value="{{ user_email }}">
@@ -61,51 +59,70 @@
             <input type="hidden" name="user_email" value="">
         {% endif %}
 
-        {# show summary of the basic info and keep them hidden #}
-        <p><strong>Process:</strong> {{ name }}</p>
-        <p><strong>Purpose:</strong> {{ purpose }}</p>
-        <p><strong>Type:</strong> {{ templates[selected_type].label if selected_type else '' }}</p>
+        {# keep form data as hidden inputs for server #}
         <input type="hidden" name="process_name" value="{{ name }}">
         <input type="hidden" name="purpose" value="{{ purpose }}">
         <input type="hidden" id="process_type" name="process_type" value="{{ selected_type }}">
 
-        {% if selected_type != 'R' %}
-        <label for="step1">First step description <span style="color: red">*</span></label>
-        <textarea id="step1" name="step1" rows="3" {% if selected_type != 'R' %}required{% endif %}>{{ step or '' }}</textarea>
+        <p style="margin:1.5rem 0; padding:0.8rem; background:#f8f9fa; border-left:4px solid #007bff;">
+            <em>You don't need to know every step of the process to answer these questions. Quick, high-level answers are exactly what we're looking for.</em>
+        </p>
+
+        {% if selected_type and templates[selected_type].questions %}
+            {% for q in templates[selected_type].questions %}
+                <div style="margin:1.5rem 0; padding:1rem; border:1px solid #ddd; border-radius:4px; background:#fafafa;">
+                    <label style="font-weight:bold; font-size:1.05rem; margin-bottom:0.8rem; display:block;">
+                        {{ loop.index }}. {{ q.text }}
+                    </label>
+                    
+                    {% if q.get('multiple') %}
+                        {# Multi-select checkboxes #}
+                        <div style="margin:0.5rem 0;">
+                            {% for val, label in q.options %}
+                            <div style="margin:0.3rem 0;">
+                                <input type="checkbox" name="{{ q.key }}" value="{{ val }}" id="{{ q.key }}_{{ val }}"
+                                       {% if values and q.key in values and val in values[q.key] %}checked{% endif %}>
+                                <label for="{{ q.key }}_{{ val }}" style="font-weight:normal; display:inline; margin-left:0.3rem;">{{ label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {# Single-select dropdown #}
+                        <select name="{{ q.key }}" id="{{ q.key }}" required style="width:100%; padding:0.5rem; margin:0.5rem 0; font-size:1rem;">
+                            <option value="">-- Select an option --</option>
+                            {% for val, label in q.options %}
+                            <option value="{{ val }}" {% if values and values.get(q.key) == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+
+                    <p style="font-size:0.9rem; color:#666; margin-top:0.8rem; padding-left:0.5rem; border-left:3px solid #dee2e6;">
+                        <strong>Why your answer matters:</strong> {{ q.explanation }}
+                    </p>
+                </div>
+            {% endfor %}
         {% endif %}
 
-        {% for key, tpl in templates.items() %}
-            <div class="question-block" id="block_{{ key }}" style="display: none;">
-                <h3>{{ tpl.label }} questions</h3>
-                {% for q in tpl.questions %}
-                    <label for="answer_{{ q.key }}">{{ q.prompt }} (1–5)</label>
-                    <input type="number" id="answer_{{ q.key }}" name="answer_{{ q.key }}" min="1" max="5"
-                           value="{% if values and ('answer_' + q.key) in values %}{{ values['answer_' + q.key] }}{% else %}{{ request.form.get('answer_' + q.key, '') }}{% endif %}"
-                           required>
-                {% endfor %}
-            </div>
-        {% endfor %}
-
-        <div class="submit">
-            <button type="submit">Save &amp; Continue</button>
+        <div class="submit" style="display: flex; justify-content: center; gap: 1rem;">
+            <button type="submit">Continue</button>
+            <button type="button" style="padding:0.5rem 1rem; border:1px solid #999; border-radius:4px; color:#333; background:#f5f5f5; cursor:pointer;" onclick="handleCancelChoice();">Cancel</button>
         </div>
     </form>
-
     <script>
-        function showQuestions() {
-            const sel = document.getElementById('process_type').value;
-            document.querySelectorAll('.question-block').forEach(block => {
-                const show = (block.id === 'block_' + sel);
-                block.style.display = show ? 'block' : 'none';
-                // disable inputs in hidden blocks so browser doesn't validate them
-                block.querySelectorAll('input').forEach(inp => inp.disabled = !show);
-            });
+        function handleCancelChoice() {
+            const saveFirst = confirm('Do you want to save your progress before closing?\n\nOK = Save Before Closing\nCancel = More options');
+            const actionField = document.getElementById('cancel_action');
+            if (saveFirst) {
+                actionField.value = 'save_before_closing';
+                document.forms[0].submit();
+                return;
+            }
+            const discard = confirm('Close without saving?\n\nOK = Close without saving\nCancel = Keep editing');
+            if (discard) {
+                actionField.value = 'close_without_saving';
+                document.forms[0].submit();
+            }
         }
-        // on page load show previously selected block if any
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.question-block input').forEach(inp => inp.disabled = true);
-            if (document.getElementById('process_type').value) showQuestions();
-        });
     </script>
 </body>
 </html>

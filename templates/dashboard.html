@@ -3,43 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 2rem auto; line-height: 1.5; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
-        th { background: #f0f0f0; }
-        .header { text-align:right; font-size:0.9rem; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 2.5rem auto;
+            line-height: 1.6;
+            padding: var(--master-menu-offset, 68px) 1rem 0;
+        }
+        .header { text-align:right; font-size:0.9rem; color: #555; }
+        .card {
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            padding: 1.5rem;
+            background: #fafafa;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        h1 { margin-top: 0; }
+        .actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+            justify-content: center;
+        }
+        .actions a {
+            display: inline-block;
+            padding: 0.6rem 1rem;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .actions a.submissions { background: #0d6efd; }
+        .actions a.submissions:hover { background: #0b5ed7; }
+        .actions a.triage { background: #198754; }
+        .actions a.triage:hover { background: #157347; }
+        .actions a.admin { background: #4b7470; }
+        .actions a.admin:hover { background: #3f625f; }
+        .actions a.reset { background: #6c757d; }
+        .actions a.reset:hover { background: #5a6268; }
     </style>
 </head>
 <body>
+    {% include '_master_menu.html' %}
     <div class="header">
         {% if user_name and user_email %}
-            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt; |
-            <a href="/logout">Logout</a>
+            Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
         {% endif %}
     </div>
-    <h1>Your Submissions</h1>
-    {% if records %}
-        <table>
-            <thead>
-                <tr><th>Date</th><th>Process</th><th>Purpose</th><th>Path</th><th>Score</th><th>Recommendation</th><th>Action</th><th>Edit</th></tr>
-            </thead>
-            <tbody>
-                {% for r in records %}
-                    <tr>
-                        <td>{{ r.created }}</td>
-                        <td>{{ r.name }}</td>
-                        <td>{{ r.purpose if r.purpose else '' }}</td>
-                        <td>{{ r.path }}</td>
-                        <td>{{ r.score.score if r.score else '' }}%</td>
-                        <td>{{ r.score.recommendation if r.score else '' }}</td>
-                        <td><a href="{{ url_for('view_record', rec_id=r.id) }}">View</a></td>
-                        <td><a href="{{ url_for('view_record', rec_id=r.id) }}/edit">Edit</a></td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No submissions yet. <a href="/">Start a new triage</a>.</p>
-    {% endif %}</body>
+    <div class="card">
+        <h1>Welcome Back{% if user_first_name %}, {{ user_first_name }}{% endif %}</h1>
+        <p>Choose what you would like to do next.</p>
+
+        <div class="actions">
+            <a class="submissions" href="{{ url_for('items') }}">View My Submissions</a>
+            <a class="triage" href="{{ url_for('deep_evaluation') }}">Triage a New Process</a>
+            <a class="reset" href="{{ url_for('reset_password') }}">Reset Password</a>
+            {% if is_admin %}
+                <a class="admin" href="{{ url_for('admin_db_view') }}">Database Admin View</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
 </html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submission Discussion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 880px; margin: 2rem auto; line-height: 1.5; padding: 0 1rem; }
+        .header { text-align: right; font-size: 0.9rem; color: #444; margin-bottom: 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem 1.25rem; background: #fafafa; }
+        .meta { color: #555; font-size: 0.9rem; margin-bottom: 0.75rem; }
+        .chat-window { margin-top: 1rem; border: 1px solid #ddd; border-radius: 8px; background: #fff; padding: 1rem; max-height: 420px; overflow-y: auto; }
+        .message {
+            margin-bottom: 0.9rem;
+            padding: 0.75rem 0.9rem;
+            border-radius: 10px;
+            max-width: 78%;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+            word-wrap: break-word;
+        }
+        .message .message-body { white-space: pre-wrap; }
+        .message.assistant .message-body { white-space: normal; }
+        .message .message-body p { margin: 0.35rem 0; }
+        .message .message-body ul,
+        .message .message-body ol { margin: 0.35rem 0 0.35rem 1.15rem; }
+        .message .message-body li { margin: 0.15rem 0; }
+        .message.user {
+            margin-left: auto;
+            background: #F6E0A7 !important;
+            border-right: 4px solid #E2B865 !important;
+        }
+        .message.assistant {
+            margin-right: auto;
+            background: #dfeceb !important;
+            border-left: 4px solid #4b7470 !important;
+        }
+        .composer { margin-top: 1rem; display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; }
+        .composer textarea { width: 100%; min-height: 92px; padding: 0.6rem; }
+        .composer button { padding: 0.6rem 1rem; border: none; border-radius: 4px; background: #198754; color: #fff; cursor: pointer; }
+        .composer button:hover { background: #157347; }
+        .llm-loading {
+            margin-top: 0.55rem;
+            font-size: 0.9rem;
+            color: #4b5563;
+            display: none;
+            align-items: center;
+            gap: 0.45rem;
+        }
+        .llm-loading.visible { display: inline-flex; }
+        .llm-loading .dots {
+            display: inline-flex;
+            gap: 0.2rem;
+        }
+        .llm-loading .dot {
+            width: 0.34rem;
+            height: 0.34rem;
+            border-radius: 999px;
+            background: #6b7280;
+            animation: llmDotPulse 1.1s infinite ease-in-out;
+        }
+        .llm-loading .dot:nth-child(2) { animation-delay: 0.15s; }
+        .llm-loading .dot:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes llmDotPulse {
+            0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+            40% { opacity: 1; transform: translateY(-1px); }
+        }
+        .actions { margin-top: 1rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .actions a { display: inline-block; text-decoration: none; color: #fff; background: #6c757d; padding: 0.5rem 0.8rem; border-radius: 4px; }
+        .map-panel { margin: 1rem 0 1.1rem 0; border: 1px solid #d5e1df; border-radius: 8px; background: #f8fbfb; padding: 0.8rem 0.9rem; }
+        .map-panel h2 { margin: 0 0 0.5rem 0; font-size: 1.05rem; }
+        .map-panel ul { margin: 0.2rem 0 0.7rem 1.2rem; }
+        .map-diagram {
+            background: #fff;
+            border: 1px solid #d8e2e0;
+            border-radius: 6px;
+            padding: 0.45rem;
+            width: 100%;
+            height: 62vh;
+            overflow-x: scroll;
+            overflow-y: scroll;
+        }
+        .map-diagram .mermaid {
+            min-width: 1200px;
+            min-height: 900px;
+        }
+        .map-diagram .mermaid svg {
+            width: max-content !important;
+            max-width: none !important;
+            height: max-content !important;
+            display: block;
+        }
+        .map-diagram .mermaid {
+            font-size: 1.15rem;
+        }
+        .map-diagram .mermaid svg .nodeLabel,
+        .map-diagram .mermaid svg .label,
+        .map-diagram .mermaid svg .nodeLabel p,
+        .map-diagram .mermaid svg .nodeLabel span,
+        .map-diagram .mermaid svg .label text,
+        .map-diagram .mermaid svg text,
+        .map-diagram .mermaid svg tspan {
+            font-size: 1.15rem !important;
+        }
+        .map-empty { color: #607173; font-style: italic; }
+        .deep-controls { margin-top: 1rem; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .deep-controls a { display: inline-block; text-decoration: none; color: #fff; padding: 0.5rem 0.8rem; border-radius: 4px; }
+        .deep-controls a.undo { background: #F6E0A7; color: #5a4300; box-shadow: inset 0 -2px 0 #E2B865; }
+        .deep-controls a.restart { background: #6c757d; }
+        .llm-warning {
+            margin: 0.9rem 0 0.4rem;
+            border: 1px solid #f0ad4e;
+            background: #fff8e6;
+            color: #7a5300;
+            border-radius: 6px;
+            padding: 0.7rem 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    {% include '_master_menu.html' %}
+    <div class="header">
+        Logged in as <strong>{{ user_name }}</strong> &lt;{{ user_email }}&gt;
+    </div>
+
+    <div class="card">
+        <h1>Discussion For {{ record.name if record.name else 'Submission' }}</h1>
+        <div class="meta">
+            Submission ID: {{ record.id }} | Type: {{ record.path | upper if record.path else 'N/A' }}
+        </div>
+
+        {% if show_mistral_unavailable_banner %}
+            <div class="llm-warning">
+                <strong>Mistral is unavailable:</strong> live AI responses are paused until Mistral connectivity/configuration is restored.
+            </div>
+        {% endif %}
+
+        {% if deep_dive %}
+            <div class="map-panel">
+                <h2>Live Process Map</h2>
+                {% if process_map and process_map.summary %}
+                    <ul id="map-summary-list">
+                        {% for line in process_map.summary %}
+                            <li>{{ line }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <ul id="map-summary-list" style="display:none;"></ul>
+                {% endif %}
+                {% if process_map_mermaid %}
+                    <div id="map-diagram-container" class="map-diagram">
+                        <div id="map-mermaid" class="mermaid">{{ process_map_mermaid }}</div>
+                    </div>
+                    <p id="map-empty-message" class="map-empty" style="display:none;">The map will appear and update as you answer the next deep-dive questions.</p>
+                {% else %}
+                    <div id="map-diagram-container" class="map-diagram" style="display:none;">
+                        <div id="map-mermaid" class="mermaid"></div>
+                    </div>
+                    <p id="map-empty-message" class="map-empty">The map will appear and update as you answer the next deep-dive questions.</p>
+                {% endif %}
+                {% if process_map and process_map.get('steps') %}
+                    <div id="map-download-wrap" style="margin-top:0.75rem;">
+                        <a class="primary" href="{{ url_for('download_process_map_pdf', rec_id=record.id) }}">Download Map PDF</a>
+                    </div>
+                {% else %}
+                    <div id="map-download-wrap" style="display:none;margin-top:0.75rem;">
+                        <a class="primary" href="{{ url_for('download_process_map_pdf', rec_id=record.id) }}">Download Map PDF</a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if deep_dive and messages|length > 1 %}
+            <div class="deep-controls">
+                <a class="undo" href="{{ url_for('record_discussion', rec_id=record.id, mode='deep', choice='undo') }}" onclick="return confirm('Go back one step? This will remove the most recent deep-dive exchange and rebuild the process map from the remaining discussion.');">Undo Previous Step</a>
+                <a class="restart" href="{{ url_for('record_discussion', rec_id=record.id, mode='deep', choice='restart') }}" onclick="return confirm('Start a new deep dive? This will clear the previous deep-dive conversation for this submission.');">Restart Deep Dive</a>
+            </div>
+        {% endif %}
+
+            <div class="chat-window">
+                {% if messages %}
+                    {% for msg in messages %}
+                        <div class="message {{ msg.role }}">
+                            <strong>{{ 'You' if msg.role == 'user' else 'Triage Assistant' }}:</strong>
+                            <div class="message-body">{{ msg.content }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="message assistant">
+                        <strong>Triage Assistant:</strong>
+                        <div class="message-body">No discussion has started yet. Use the prompt box below to begin.</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="post" class="composer">
+                <textarea name="message" placeholder="Type your response here." required></textarea>
+                <button type="submit">Send</button>
+            </form>
+            <div id="llm-loading-indicator" class="llm-loading" aria-live="polite" aria-atomic="true">
+                Waiting for Triage Assistant
+                <span class="dots" aria-hidden="true">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </span>
+            </div>
+
+            <form method="post" style="margin-top:0.8rem; text-align:right;">
+                <input type="hidden" name="cancel_action" value="save_and_close">
+                <button type="submit" style="padding:0.6rem 1rem; border:none; border-radius:4px; background:#6c757d; color:#fff; cursor:pointer;">Save and Close</button>
+            </form>
+
+        <div class="actions">
+            <a href="{{ url_for('items') }}">Back To My Submissions</a>
+            <a href="{{ url_for('view_record', rec_id=record.id) }}">View Submission</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+        import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3/+esm';
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+        marked.setOptions({ gfm: true, breaks: true });
+
+        const pageScrollKey = {{ ('discussion-scroll-' ~ record.id)|tojson }};
+        const mapChangedThisRequest = {{ map_changed_this_request|default(false)|tojson }};
+
+        function addMermaidTooltips() {
+            const mermaidDiv = document.querySelector('.map-diagram .mermaid');
+            if (!mermaidDiv) return;
+
+            const diagramText = mermaidDiv.textContent;
+            const match = diagramText.match(/%% {fullTextMap:\s*({.*?})}/);
+            if (!match) return;
+
+            let fullTextMap = {};
+            try {
+                fullTextMap = JSON.parse(match[1]);
+            } catch (e) {
+                console.error('Failed to parse full text map:', e);
+                return;
+            }
+
+            const svg = mermaidDiv.querySelector('svg');
+            if (!svg) return;
+
+            const nodes = svg.querySelectorAll('g[id^="N"]');
+            nodes.forEach(nodeGroup => {
+                const nodeId = nodeGroup.getAttribute('id');
+                const fullText = fullTextMap[nodeId];
+                if (fullText && fullText.length > 50) {
+                    const textElement = nodeGroup.querySelector('text');
+                    if (textElement) {
+                        textElement.setAttribute('title', fullText);
+                    }
+
+                    const rectElement = nodeGroup.querySelector('rect, polygon, ellipse, path');
+                    if (rectElement) {
+                        rectElement.setAttribute('title', fullText);
+                        rectElement.style.cursor = 'help';
+                    }
+                }
+            });
+        }
+
+        async function renderMermaidNode(node, sourceText) {
+            if (!node) {
+                return;
+            }
+            const text = String(sourceText || '').trim();
+            if (!text) {
+                node.innerHTML = '';
+                return;
+            }
+
+            node.removeAttribute('data-processed');
+            node.innerHTML = '';
+            node.textContent = text;
+
+            try {
+                await mermaid.run({ nodes: [node] });
+            } catch (err) {
+                console.error('Mermaid render failed:', err);
+            }
+        }
+
+        async function ensureInitialMapRendered() {
+            const mapMermaid = document.getElementById('map-mermaid');
+            if (!mapMermaid) {
+                return;
+            }
+            const hasSvg = !!mapMermaid.querySelector('svg');
+            const text = (mapMermaid.textContent || '').trim();
+            if (!hasSvg && text.includes('flowchart')) {
+                await renderMermaidNode(mapMermaid, text);
+            }
+        }
+
+        function scrollChatToBottom() {
+            const chatWindow = document.querySelector('.chat-window');
+            if (!chatWindow) return;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function removeEmptyChatPlaceholder() {
+            const chatWindow = document.querySelector('.chat-window');
+            if (!chatWindow) return;
+            const placeholders = Array.from(chatWindow.querySelectorAll('.message.assistant'));
+            placeholders.forEach(node => {
+                const text = (node.textContent || '').toLowerCase();
+                if (text.includes('no discussion has started yet')) {
+                    node.remove();
+                }
+            });
+        }
+
+        function appendChatMessage(role, content) {
+            const chatWindow = document.querySelector('.chat-window');
+            if (!chatWindow) return;
+            const wrapper = document.createElement('div');
+            wrapper.className = `message ${role}`;
+
+            const title = document.createElement('strong');
+            title.textContent = role === 'user' ? 'You:' : 'Triage Assistant:';
+
+            const body = document.createElement('div');
+            body.className = 'message-body';
+
+            if (role === 'assistant') {
+                body.innerHTML = renderAssistantMarkdown(content);
+            } else {
+                body.textContent = String(content || '');
+            }
+
+            wrapper.appendChild(title);
+            wrapper.appendChild(body);
+            chatWindow.appendChild(wrapper);
+        }
+
+        function renderAssistantMarkdown(content) {
+            const raw = String(content || '');
+            const parsed = marked.parse(raw);
+            return DOMPurify.sanitize(parsed, { USE_PROFILES: { html: true } });
+        }
+
+        function renderInitialAssistantMarkdown() {
+            const nodes = document.querySelectorAll('.chat-window .message.assistant .message-body');
+            nodes.forEach(node => {
+                const raw = node.textContent || '';
+                node.innerHTML = renderAssistantMarkdown(raw);
+            });
+        }
+
+        async function updateMapFromResponse(data) {
+            const summaryList = document.getElementById('map-summary-list');
+            const mapDiagram = document.getElementById('map-diagram-container');
+            const mapMermaid = document.getElementById('map-mermaid');
+            const mapEmpty = document.getElementById('map-empty-message');
+            const mapDownloadWrap = document.getElementById('map-download-wrap');
+
+            if (summaryList) {
+                const summary = Array.isArray(data.process_map_summary) ? data.process_map_summary : [];
+                summaryList.innerHTML = '';
+                if (summary.length) {
+                    summaryList.style.display = '';
+                    summary.forEach(line => {
+                        const li = document.createElement('li');
+                        li.textContent = String(line || '');
+                        summaryList.appendChild(li);
+                    });
+                } else {
+                    summaryList.style.display = 'none';
+                }
+            }
+
+            if (mapMermaid && mapDiagram && mapEmpty) {
+                const mermaidText = String(data.process_map_mermaid || '').trim();
+                if (mermaidText) {
+                    mapDiagram.style.display = '';
+                    mapEmpty.style.display = 'none';
+                    await renderMermaidNode(mapMermaid, mermaidText);
+                    addMermaidTooltips();
+                } else {
+                    mapDiagram.style.display = 'none';
+                    mapEmpty.style.display = '';
+                }
+            }
+
+            if (mapDownloadWrap) {
+                mapDownloadWrap.style.display = data.has_steps ? '' : 'none';
+            }
+        }
+
+        function restorePageScroll() {
+            if (mapChangedThisRequest) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+                return;
+            }
+
+            const savedScroll = sessionStorage.getItem(pageScrollKey);
+            if (savedScroll !== null) {
+                const scrollY = Number.parseInt(savedScroll, 10);
+                if (!Number.isNaN(scrollY)) {
+                    window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
+                }
+            }
+        }
+
+        function savePageScroll() {
+            sessionStorage.setItem(pageScrollKey, String(window.scrollY || window.pageYOffset || 0));
+        }
+
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', () => {
+                savePageScroll();
+            });
+        });
+
+        const composerForm = document.querySelector('form.composer');
+        const composerTextarea = composerForm ? composerForm.querySelector('textarea[name="message"]') : null;
+        const composerButton = composerForm ? composerForm.querySelector('button[type="submit"]') : null;
+        const loadingIndicator = document.getElementById('llm-loading-indicator');
+
+        if (composerForm && composerTextarea && composerButton && loadingIndicator) {
+            composerForm.addEventListener('submit', async event => {
+                event.preventDefault();
+                const hasText = (composerTextarea.value || '').trim().length > 0;
+                if (!hasText) {
+                    return;
+                }
+
+                savePageScroll();
+                loadingIndicator.classList.add('visible');
+                composerTextarea.setAttribute('readonly', 'readonly');
+                composerButton.disabled = true;
+                composerButton.textContent = 'Waiting...';
+
+                const formData = new FormData(composerForm);
+                const userText = String(formData.get('message') || '').trim();
+
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: formData,
+                        credentials: 'same-origin',
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Request failed with status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    removeEmptyChatPlaceholder();
+                    appendChatMessage('user', userText);
+                    appendChatMessage('assistant', data.assistant_message || '');
+
+                    if (data.deep_dive) {
+                        await updateMapFromResponse(data);
+                    }
+
+                    composerForm.reset();
+                    scrollChatToBottom();
+                } catch (err) {
+                    console.error('Composer submit failed:', err);
+                    HTMLFormElement.prototype.submit.call(composerForm);
+                    return;
+                } finally {
+                    loadingIndicator.classList.remove('visible');
+                    composerTextarea.removeAttribute('readonly');
+                    composerButton.disabled = false;
+                    composerButton.textContent = 'Send';
+                    composerTextarea.focus();
+                }
+            });
+        }
+
+        document.querySelectorAll('.deep-controls a').forEach(link => {
+            link.addEventListener('click', () => {
+                savePageScroll();
+            });
+        });
+
+        // Wait for Mermaid to render, then add tooltips
+        setTimeout(async () => {
+            renderInitialAssistantMarkdown();
+            await ensureInitialMapRendered();
+            addMermaidTooltips();
+            scrollChatToBottom();
+            restorePageScroll();
+        }, 100);
+
+        // Also try when diagram becomes available
+        const observer = new MutationObserver(() => {
+            addMermaidTooltips();
+        });
+
+        const mermaidDiv = document.querySelector('.map-diagram');
+        if (mermaidDiv) {
+            observer.observe(mermaidDiv, { childList: true, subtree: true });
+        }
+
+        window.addEventListener('load', () => {
+            scrollChatToBottom();
+            restorePageScroll();
+        });
+    </script>
+</body>
+</html>

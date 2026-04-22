@@ -1,6 +1,11 @@
 flask>=2.0
+sqlalchemy>=2.0
+psycopg[binary]>=3.2
+python-dotenv>=1.0
+gunicorn>=21.2
+reportlab>=4.0
+certifi>=2024.0.0
 
-# No external dependencies required — uses Python standard library
 # Recommended Python version: 3.8+
 # To create and activate venv:
 #   python3 -m venv .venv
