@@ -22,8 +22,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def requires_explicit_secret_key() -> bool:
+    env_name = (os.environ.get('APP_ENV', '').strip().lower() or os.environ.get('FLASK_ENV', '').strip().lower())
+    if env_name == 'development':
+        return False
+    if env_name == 'production':
+        return True
+    # Hosted runtimes (e.g., Heroku dynos) should never use per-process random keys.
+    return bool(
+        os.environ.get('DYNO')
+        or os.environ.get('RENDER')
+        or os.environ.get('K_SERVICE')
+        or os.environ.get('WEBSITE_INSTANCE_ID')
+    )
+
+
+configured_secret_key = os.environ.get('FLASK_SECRET_KEY', '').strip()
+if requires_explicit_secret_key() and not configured_secret_key:
+    raise RuntimeError('FLASK_SECRET_KEY is required for hosted/production runtime. Set it as an environment variable before starting the app.')
+
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', '').strip() or secrets.token_urlsafe(32)
+app.secret_key = configured_secret_key or secrets.token_urlsafe(32)
 secure_cookies = os.environ.get('SESSION_COOKIE_SECURE', '0').strip() == '1'
 app.config.update(
     SESSION_PERMANENT=False,
