@@ -141,6 +141,10 @@ PROCESS_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "label": "Data Entry / Copying Between Systems",
         "questions": QUICK_LOOK_QUESTIONS
     },
+    "O": {
+        "label": "Other",
+        "questions": QUICK_LOOK_QUESTIONS
+    },
 }
 
 

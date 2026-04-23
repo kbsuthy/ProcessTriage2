@@ -124,7 +124,7 @@ To enable live discussion with AI-powered process mapping, set:
 MISTRAL_API_KEY=your_mistral_api_key_here
 ```
 
-If `MISTRAL_API_KEY` is not set, the app will use a fallback rule-based discussion system (discussions will still work, but without live LLM responses).
+If `MISTRAL_API_KEY` is not set or is invalid, the app cannot use live Mistral responses. In strict live mode (`ENFORCE_MISTRAL_LIVE=1`, the default), the discussion view will show an availability warning until the key is fixed.
 
 **Security in Production:**
 When `APP_ENV=production`, startup includes strict security validation. The app will fail fast if critical settings are unsafe or missing (for example, missing/weak `FLASK_SECRET_KEY`, `SESSION_COOKIE_SECURE!=1`, or incomplete admin bootstrap credentials).
